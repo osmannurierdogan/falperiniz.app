@@ -1,0 +1,111 @@
+@import './_variables';
+
+// Mixins
+@mixin glass-morphism {
+  background: rgba($white, 0.05);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba($white, 0.1);
+  box-shadow: $card-shadow;
+}
+
+@mixin neon-glow($color) {
+  box-shadow:
+    0 0 10px rgba($color, 0.3),
+    0 0 20px rgba($color, 0.2),
+    0 0 30px rgba($color, 0.1);
+  transition: box-shadow $transition-normal;
+}
+
+@mixin floating {
+  animation: floating 6s ease-in-out infinite;
+  will-change: transform;
+}
+
+@mixin button-hover {
+  &::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    background: $primary-gradient;
+    border-radius: inherit;
+    z-index: -1;
+    opacity: 0;
+    transition: opacity $transition-normal;
+  }
+
+  &:hover::before {
+    opacity: 0.5;
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+@mixin responsive($breakpoint) {
+  @if $breakpoint == mobile {
+    @media (max-width: $mobile) {
+      @content;
+    }
+  } @else if $breakpoint == tablet {
+    @media (max-width: $tablet) {
+      @content;
+    }
+  } @else if $breakpoint == desktop {
+    @media (max-width: $desktop) {
+      @content;
+    }
+  }
+}
+
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@mixin flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+@mixin text-gradient {
+  background: $primary-gradient;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@mixin card-hover {
+  transition:
+    transform $transition-normal,
+    box-shadow $transition-normal;
+
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: $hover-shadow;
+  }
+}
+
+@mixin scrollbar {
+  &::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: rgba($primary-light, 0.1);
+    border-radius: $radius-sm;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: $primary-gradient;
+    border-radius: $radius-sm;
+
+    &:hover {
+      background: lighten($secondary, 10%);
+    }
+  }
+}

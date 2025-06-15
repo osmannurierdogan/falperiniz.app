@@ -1,0 +1,59 @@
+// Colors
+$primary: #2b1b47; // Ana mor tonu
+$primary-light: #3d2960; // Orta ton mor
+$primary-dark: #1a1133; // Derin mor
+$secondary: #e83e8c; // Yumuşak pembe
+$secondary-light: #f06598; // Soft pembe
+$secondary-dark: #d62a7a; // Koyu pembe
+$accent: #9b4dca; // Mistik mor
+$accent-light: #b06ddb; // Açık mor
+$accent-dark: #8a3cb9; // Koyu mor
+$white: #ffffff;
+$black: #000000;
+
+// Background Colors
+$bg-primary: linear-gradient(135deg, rgba($primary-light, 0.95), rgba($primary-dark, 0.98));
+$bg-gradient: linear-gradient(135deg, rgba($secondary, 0.75), rgba($accent, 0.75));
+$bg-card: rgba($primary-light, 0.15);
+
+// Text Colors
+$text-primary: $white;
+$text-secondary: rgba($white, 0.85);
+$text-muted: rgba($white, 0.65);
+
+// Gradients
+$primary-gradient: linear-gradient(45deg, $secondary, $accent);
+$dark-gradient: linear-gradient(45deg, rgba($primary-dark, 0.95), rgba($primary, 0.95));
+$glow-gradient: linear-gradient(45deg, rgba($secondary, 0.12), rgba($accent, 0.12));
+
+// Shadows
+$card-shadow: 0 8px 32px rgba($black, 0.12);
+$hover-shadow: 0 4px 20px rgba($secondary, 0.3);
+$text-shadow: 0 2px 4px rgba($black, 0.12);
+
+// Breakpoints
+$mobile: 768px;
+$tablet: 992px;
+$desktop: 1200px;
+
+// Z-indices
+$z-header: 1000;
+$z-modal: 1100;
+$z-tooltip: 1200;
+
+// Transitions
+$transition-fast: 0.2s ease;
+$transition-normal: 0.3s ease;
+$transition-slow: 0.5s ease;
+
+// Border Radius
+$radius-sm: 4px;
+$radius-md: 8px;
+$radius-lg: 16px;
+$radius-xl: 24px;
+
+// Effects
+$glass-blur: 12px;
+$glass-opacity: 0.1;
+$hover-lift: -8px;
+$hover-scale: 1.03;

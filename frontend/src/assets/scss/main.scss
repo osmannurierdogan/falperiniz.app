@@ -1,0 +1,205 @@
+@import './_variables';
+@import './_mixins';
+
+// Reset & Base Styles
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-weight: normal;
+}
+
+body {
+  min-height: 100vh;
+  color: $text-primary;
+  background: $bg-primary;
+  transition:
+    color 0.5s,
+    background-color 0.5s;
+  line-height: 1.6;
+  font-family:
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    Oxygen,
+    Ubuntu,
+    Cantarell,
+    'Fira Sans',
+    'Droid Sans',
+    'Helvetica Neue',
+    sans-serif;
+  font-size: 16px;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  &::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: $glow-gradient;
+    opacity: 0.1;
+    pointer-events: none;
+    z-index: -1;
+  }
+}
+
+// Typography
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+h1 {
+  font-size: clamp(2.5rem, 5vw, 4.5rem);
+}
+
+h2 {
+  font-size: clamp(2rem, 4vw, 3.5rem);
+}
+
+h3 {
+  font-size: clamp(1.5rem, 3vw, 2.5rem);
+}
+
+p {
+  margin-bottom: 1rem;
+}
+
+// Links
+a {
+  text-decoration: none;
+  color: inherit;
+  transition: $transition-normal;
+}
+
+// Buttons
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: $transition-normal;
+  text-decoration: none;
+  border: none;
+  outline: none;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  &.btn-primary {
+    background: $primary-gradient;
+    color: $white;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: $hover-shadow;
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+  }
+
+  &.btn-outline {
+    background: transparent;
+    border: 1px solid rgba($white, 0.2);
+    color: $white;
+
+    &:hover {
+      border-color: $secondary;
+      background: rgba($white, 0.1);
+      transform: translateY(-2px);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+  }
+}
+
+// Container
+.container {
+  width: 100%;
+  max-width: $desktop;
+  margin: 0 auto;
+  padding: 0 2rem;
+
+  @media (max-width: $mobile) {
+    padding: 0 1.5rem;
+  }
+}
+
+// Utilities
+.text-gradient {
+  background: $primary-gradient;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.glass-morphism {
+  background: rgba($white, 0.05);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba($white, 0.1);
+  box-shadow: $card-shadow;
+}
+
+// Animations
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes floating {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+// Responsive
+@media (max-width: $tablet) {
+  html {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: $mobile) {
+  html {
+    font-size: 12px;
+  }
+}
