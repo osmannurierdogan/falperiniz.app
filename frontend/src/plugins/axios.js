@@ -1,52 +1,53 @@
 import axios from 'axios'
+import { useAuthStore } from '@/stores/authStore'
 
-const axiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000',
-  timeout: 10000,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-})
+// API URL'ini ayarla
+axios.defaults.baseURL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
-// İstek interceptor'ı
-axiosInstance.interceptors.request.use(
+// Request interceptor
+axios.interceptors.request.use(
   (config) => {
-    console.log('İstek yapılıyor:', config.url) // Debug için
-    // const token = localStorage.getItem('token')
-    // if (token) {
-    //   config.headers.Authorization = `Bearer ${token}`
-    // }
+    const authStore = useAuthStore()
+    const token = authStore.token
+
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
+    }
+
     return config
   },
   (error) => {
-    console.error('İstek hatası:', error)
     return Promise.reject(error)
   },
 )
 
-// Yanıt interceptor'ı
-axiosInstance.interceptors.response.use(
-  (response) => {
-    console.log('Başarılı yanıt:', response.config.url) // Debug için
-    return response
-  },
-  (error) => {
-    if (error.response) {
-      // Sunucudan gelen hata yanıtı
-      console.error('API Hatası:', {
-        status: error.response.status,
-        url: error.config.url,
-        data: error.response.data,
-      })
-    } else if (error.request) {
-      // Sunucuya ulaşılamadı
-      console.error('Sunucuya ulaşılamadı:', error.config.url)
-    } else {
-      // İstek oluşturulurken hata oluştu
-      console.error('İstek hatası:', error.message)
+// Response interceptor
+axios.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const authStore = useAuthStore()
+    const originalRequest = error.config
+
+    // Token yenileme denemesi yapılmamışsa ve 401 hatası alındıysa
+    if (error.response?.status === 401 && !originalRequest._retry && authStore.token) {
+      originalRequest._retry = true
+
+      try {
+        // Token'ı yenile
+        await authStore.refreshToken()
+
+        // Yeni token ile isteği tekrarla
+        originalRequest.headers.Authorization = `Bearer ${authStore.token}`
+        return axios(originalRequest)
+      } catch (refreshError) {
+        // Token yenileme başarısız olursa çıkış yap
+        await authStore.logout()
+        return Promise.reject(refreshError)
+      }
     }
+
     return Promise.reject(error)
   },
 )
 
-export default axiosInstance
+export default axios

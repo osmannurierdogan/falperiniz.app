@@ -72,11 +72,11 @@
 
 <script setup>
 import { ref } from 'vue'
-import axios from 'axios'
+import { usePaymentStore } from '@/stores/paymentStore'
 import { useProductStore } from '@/stores/productStore'
 import emailjs from '@emailjs/browser'
 
-const API_URL = 'http://localhost:3000'
+const paymentStore = usePaymentStore()
 const productStore = useProductStore()
 const coffeeProduct = productStore.getProduct('coffee')
 
@@ -139,14 +139,15 @@ const sendFormEmail = async (formData) => {
     )
   } catch (error) {
     console.error('E-posta gönderme hatası:', error)
+    throw error
   }
 }
 
 const handleSubmit = async () => {
-  isSubmitting.value = true
-  submitError.value = null
-
   try {
+    isSubmitting.value = true
+    submitError.value = null
+
     // Form verilerini hazırla
     const formData = {
       ...form.value,
@@ -156,18 +157,11 @@ const handleSubmit = async () => {
     // E-posta gönder
     await sendFormEmail(formData)
 
-    // Checkout session oluştur
-    const { data } = await axios.post(`${API_URL}/create-checkout-session`, {
-      amount: coffeeProduct.price,
-      type: 'coffee',
-      formData
-    })
-
-    // Stripe Checkout sayfasına yönlendir
-    window.location.href = data.url
+    // Ödeme işlemini başlat
+    await paymentStore.createCheckoutSession('coffee')
   } catch (error) {
     console.error('Form gönderme hatası:', error)
-    submitError.value = error.response?.data?.error || 'İşlem sırasında bir hata oluştu. Lütfen tekrar deneyin.'
+    submitError.value = error.message || 'Form gönderme hatası oluştu'
   } finally {
     isSubmitting.value = false
   }

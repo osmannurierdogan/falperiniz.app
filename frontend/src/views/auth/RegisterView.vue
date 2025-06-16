@@ -1,131 +1,124 @@
 <template lang="pug">
-.register-page(class="min-h-screen bg-gradient-elegant from-primary-50 to-secondary-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8")
-  .container(class="max-w-md w-full")
-    .card(class="relative")
-      .absolute(class="-inset-1 bg-gradient-elegant from-primary-500 to-secondary-500 rounded-2xl blur opacity-25")
-      .relative
-        .text-center(class="mb-8")
-          h1(class="text-4xl font-bold mb-2 bg-gradient-elegant from-primary-600 to-secondary-600 bg-clip-text text-transparent") Kayıt Ol
-          p(class="text-gray-600") Hemen ücretsiz hesap oluşturun
-        
-        form(@submit.prevent="handleRegister")
-          .space-y-6
-            .form-group
-              label.form-label(for="name") Ad Soyad
-              input#name.form-input(
-                type="text"
-                v-model="name"
-                placeholder="Ad Soyad"
-                required
-                class="mt-1"
-              )
-            
-            .form-group
-              label.form-label(for="email") E-posta Adresi
-              input#email.form-input(
-                type="email"
-                v-model="email"
-                placeholder="ornek@email.com"
-                required
-                class="mt-1"
-              )
-            
-            .form-group
-              label.form-label(for="password") Şifre
-              input#password.form-input(
-                type="password"
-                v-model="password"
-                placeholder="••••••••"
-                required
-                class="mt-1"
-              )
-              p(class="mt-1 text-sm text-gray-500") En az 6 karakter uzunluğunda olmalıdır
-            
-            .form-group
-              label.form-label(for="passwordConfirm") Şifre Tekrar
-              input#passwordConfirm.form-input(
-                type="password"
-                v-model="passwordConfirm"
-                placeholder="••••••••"
-                required
-                class="mt-1"
-              )
-            
-            .form-group
-              .flex(class="items-start")
-                input#terms(
-                  type="checkbox"
-                  v-model="acceptTerms"
-                  required
-                  class="h-4 w-4 mt-1 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-                )
-                .ml-3
-                  label(for="terms" class="text-sm text-gray-600") Kullanım şartlarını ve gizlilik politikasını kabul ediyorum
-                  .flex(class="space-x-1 text-sm")
-                    a(href="#" class="text-primary-600 hover:text-primary-500") Kullanım Şartları
-                    span(class="text-gray-500") ve
-                    a(href="#" class="text-primary-600 hover:text-primary-500") Gizlilik Politikası
-            
-            button(
-              type="submit"
-              class="btn btn-primary w-full"
-              :disabled="!isFormValid"
-              :class="{ 'opacity-50 cursor-not-allowed': !isFormValid }"
-            ) Kayıt Ol
-        
-        .mt-8(class="text-center")
-          p(class="text-gray-600")
-            | Zaten hesabınız var mı? 
-            router-link(
-              to="/login"
-              class="font-medium text-primary-600 hover:text-primary-500"
-            ) Giriş Yapın
+.register-page.min-h-screen.flex.items-center.justify-center
+  .container.max-w-md.w-full.mx-4
+    .card(class="bg-white/5 rounded-lg p-6")
+      h1.text-2xl.font-semibold.text-white.text-center.mb-6 Kayıt Ol
+
+      form(@submit.prevent="handleSubmit(register)")
+        BaseInput(
+          id="name"
+          v-model="form.name"
+          label="Ad Soyad"
+          required
+          :error="errors.name"
+        )
+
+        BaseInput(
+          id="email"
+          v-model="form.email"
+          type="email"
+          label="E-posta"
+          required
+          :error="errors.email"
+        )
+
+        BaseInput(
+          id="password"
+          v-model="form.password"
+          type="password"
+          label="Şifre"
+          required
+          :error="errors.password"
+        )
+
+        BaseInput(
+          id="password_confirmation"
+          v-model="form.password_confirmation"
+          type="password"
+          label="Şifre Tekrar"
+          required
+          :error="errors.password_confirmation"
+        )
+
+        .flex.items-center.mb-6
+          input#terms.form-checkbox(
+            type="checkbox"
+            v-model="form.terms"
+            required
+          )
+          label.text-sm.text-gray-300.ml-2(
+            for="terms"
+          )
+            | Kullanım şartlarını ve 
+            a(
+              href="#"
+              target="_blank"
+              class="text-primary-500 hover:text-primary-400"
+            ) gizlilik politikasını
+            |  kabul ediyorum.
+
+        BaseButton(
+          type="submit"
+          :loading="loading"
+          loading-text="Kayıt Yapılıyor..."
+          class="w-full"
+        ) Kayıt Ol
+
+      .text-center.mt-6
+        router-link(
+          to="/auth/login"
+          class="text-sm text-gray-400 hover:text-white"
+        ) Zaten hesabınız var mı? Giriş yapın
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { useForm } from '@/composables/useForm'
+import { useAuthStore } from '@/stores/authStore'
+import BaseInput from '@/components/ui/BaseInput.vue'
+import BaseButton from '@/components/ui/BaseButton.vue'
 
 const router = useRouter()
-const name = ref('')
-const email = ref('')
-const password = ref('')
-const passwordConfirm = ref('')
-const acceptTerms = ref(false)
+const authStore = useAuthStore()
 
-const isFormValid = computed(() => {
-  return (
-    name.value.length > 0 &&
-    email.value.length > 0 &&
-    password.value.length >= 6 &&
-    password.value === passwordConfirm.value &&
-    acceptTerms.value
-  )
-})
-
-const handleRegister = async () => {
-  try {
-    // Backend bağlantısı yapılacak
-    console.log('Register attempt:', {
-      name: name.value,
-      email: email.value,
-      password: password.value
-    })
-
-    // Başarılı kayıt sonrası giriş sayfasına yönlendirme
-    router.push('/login')
-  } catch (error) {
-    console.error('Register error:', error)
+const { form, errors, loading, handleSubmit } = useForm(
+  {
+    name: '',
+    email: '',
+    password: '',
+    password_confirmation: '',
+    terms: false
+  },
+  {
+    successMessage: 'Kayıt başarılı'
   }
+)
+
+const register = async () => {
+  await authStore.register(form)
+  router.push('/admin')
 }
 </script>
 
 <style lang="scss" scoped>
-.form-group {
-  @apply relative;
+.register-page {
+  .form-input {
+    @apply w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white;
+    @apply focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500;
 
-  &:focus-within label {
-    @apply text-primary-500;
+    &::placeholder {
+      @apply text-gray-400;
+    }
+  }
+
+  .btn {
+    @apply px-4 py-2 rounded-lg font-medium transition-all duration-200;
+
+    &.btn-primary {
+      @apply bg-primary-500 text-white;
+      @apply hover:bg-primary-600;
+      @apply disabled:opacity-50 disabled:cursor-not-allowed;
+    }
   }
 }
 </style>

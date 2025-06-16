@@ -10,6 +10,7 @@ export const useUserStore = defineStore('user', {
   getters: {
     getUser: (state) => state.user,
     isLoggedIn: (state) => state.isAuthenticated,
+    isAdmin: (state) => state.user?.role === 'admin',
   },
 
   actions: {
@@ -33,9 +34,24 @@ export const useUserStore = defineStore('user', {
     async checkAuth() {
       const token = localStorage.getItem('token')
       if (token) {
-        this.token = token
-        this.isAuthenticated = true
-        // Burada API'den kullanıcı bilgilerini çekebilirsiniz
+        try {
+          this.token = token
+          // API'den kullanıcı bilgilerini çek
+          const response = await fetch('/api/user/me', {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          })
+          if (response.ok) {
+            const userData = await response.json()
+            this.setUser(userData)
+          } else {
+            this.logout()
+          }
+        } catch (error) {
+          console.error('Auth check error:', error)
+          this.logout()
+        }
       }
     },
   },

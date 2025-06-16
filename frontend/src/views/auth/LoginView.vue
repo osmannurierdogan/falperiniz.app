@@ -1,95 +1,103 @@
 <template lang="pug">
-.login-page(class="min-h-screen bg-gradient-elegant from-primary-50 to-secondary-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8")
-  .container(class="max-w-md w-full")
-    .card(class="relative")
-      .absolute(class="-inset-1 bg-gradient-elegant from-primary-500 to-secondary-500 rounded-2xl blur opacity-25")
-      .relative
-        .text-center(class="mb-8")
-          h1(class="text-4xl font-bold mb-2 bg-gradient-elegant from-primary-600 to-secondary-600 bg-clip-text text-transparent") Hoş Geldiniz
-          p(class="text-gray-600") Hesabınıza giriş yapın
-        
-        form(@submit.prevent="handleLogin")
-          .space-y-6
-            .form-group
-              label.form-label(for="email") E-posta Adresi
-              input#email.form-input(
-                type="email"
-                v-model="email"
-                placeholder="ornek@email.com"
-                required
-                class="mt-1"
-              )
-            
-            .form-group
-              label.form-label(for="password") Şifre
-              input#password.form-input(
-                type="password"
-                v-model="password"
-                placeholder="••••••••"
-                required
-                class="mt-1"
-              )
-            
-            .flex(class="items-center justify-between")
-              .flex(class="items-center")
-                input#remember(
-                  type="checkbox"
-                  v-model="rememberMe"
-                  class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-                )
-                label(for="remember" class="ml-2 block text-sm text-gray-600") Beni Hatırla
-              
-              router-link(
-                to="/forgot-password"
-                class="text-sm font-medium text-primary-600 hover:text-primary-500"
-              ) Şifremi Unuttum
-            
-            button(
-              type="submit"
-              class="btn btn-primary w-full mt-6"
-            ) Giriş Yap
-        
-        .mt-8(class="text-center")
-          p(class="text-gray-600")
-            | Hesabınız yok mu? 
-            router-link(
-              to="/register"
-              class="font-medium text-primary-600 hover:text-primary-500"
-            ) Hemen Kayıt Olun
+.login-page.min-h-screen.flex.items-center.justify-center
+  .container.max-w-md.w-full.mx-4
+    .card(class="bg-white/5 rounded-lg p-6")
+      h1.text-2xl.font-semibold.text-white.text-center.mb-6 Giriş Yap
+
+      form(@submit.prevent="handleSubmit(login)")
+        BaseInput(
+          id="email"
+          v-model="form.email"
+          type="email"
+          label="E-posta"
+          required
+          :error="errors.email"
+        )
+
+        BaseInput(
+          id="password"
+          v-model="form.password"
+          type="password"
+          label="Şifre"
+          required
+          :error="errors.password"
+        )
+
+        .flex.justify-between.items-center.mb-6
+          .flex.items-center
+            input#remember.form-checkbox(
+              type="checkbox"
+              v-model="form.remember"
+            )
+            label.text-sm.text-gray-300.ml-2(
+              for="remember"
+            ) Beni Hatırla
+
+          router-link(
+            to="/auth/forgot-password"
+            class="text-sm text-primary-500 hover:text-primary-400"
+          ) Şifremi Unuttum
+
+        BaseButton(
+          type="submit"
+          :loading="loading"
+          loading-text="Giriş Yapılıyor..."
+          class="w-full"
+        ) Giriş Yap
+
+      .text-center.mt-6
+        router-link(
+          to="/auth/register"
+          class="text-sm text-gray-400 hover:text-white"
+        ) Hesabınız yok mu? Kayıt olun
 </template>
 
 <script setup>
-import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useForm } from '@/composables/useForm'
+import { useAuthStore } from '@/stores/authStore'
+import BaseInput from '@/components/ui/BaseInput.vue'
+import BaseButton from '@/components/ui/BaseButton.vue'
 
 const router = useRouter()
-const email = ref('')
-const password = ref('')
-const rememberMe = ref(false)
+const authStore = useAuthStore()
 
-const handleLogin = async () => {
-  try {
-    // Backend bağlantısı yapılacak
-    console.log('Login attempt:', {
-      email: email.value,
-      password: password.value,
-      rememberMe: rememberMe.value
-    })
-
-    // Başarılı giriş sonrası ana sayfaya yönlendirme
-    router.push('/')
-  } catch (error) {
-    console.error('Login error:', error)
+const { form, errors, loading, handleSubmit } = useForm(
+  {
+    email: '',
+    password: '',
+    remember: false
+  },
+  {
+    successMessage: 'Giriş başarılı'
   }
+)
+
+const login = async () => {
+  await authStore.login(form)
+  router.push('/admin')
 }
 </script>
 
 <style lang="scss" scoped>
-.form-group {
-  @apply relative;
+.login-page {
+  .form-input {
+    @apply w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white;
+    @apply focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500;
 
-  &:focus-within label {
-    @apply text-primary-500;
+    &::placeholder {
+      @apply text-gray-400;
+    }
+  }
+
+  .btn {
+    @apply px-4 py-2 rounded-lg font-medium transition-all duration-200;
+
+    &.btn-primary {
+      @apply bg-primary-500 text-white;
+      @apply hover:bg-primary-600;
+      @apply disabled:opacity-50 disabled:cursor-not-allowed;
+    }
   }
 }
 </style>
