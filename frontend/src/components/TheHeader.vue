@@ -28,6 +28,12 @@ header.site-header(role="banner")
           ) Kahve Falı
           
           router-link.nav-link(
+            :to="{ name: 'about' }"
+            role="menuitem"
+            :class="{ active: $route.path === '/about' }"
+          ) Hakkımızda
+          
+          router-link.nav-link(
             href="https://falperiniz.com/blogs/ne-anlama-gelir"
             target="_blank"
             rel="noopener noreferrer"
