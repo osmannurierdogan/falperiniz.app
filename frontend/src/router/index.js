@@ -6,6 +6,7 @@ import PaymentSuccessView from '@/views/payment/PaymentSuccessView.vue'
 import PaymentCancelView from '@/views/payment/PaymentCancelView.vue'
 import adminGuard from './guards/adminGuard'
 import guestGuard from './guards/guestGuard'
+import AboutView from '@/views/AboutView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -16,6 +17,14 @@ const router = createRouter({
       component: HomeView,
       meta: {
         title: 'Ana Sayfa',
+      },
+    },
+    {
+      path: '/about',
+      name: 'about',
+      component: AboutView,
+      meta: {
+        title: 'Hakkımızda',
       },
     },
     {
