@@ -1,12 +1,19 @@
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { StripeService } = require('../services/StripeService');
-const { OpenAIService } = require('../services/OpenAIService');
+const openAIService = require('../services/OpenAIService');
+const nodemailer = require('nodemailer');
 
 class PaymentController {
-  constructor() {
-    this.stripeService = new StripeService();
-    this.openAIService = new OpenAIService();
-  }
+  static stripeService = new StripeService();
+
+  // E-posta göndermek için transporter oluştur
+  static transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASSWORD
+    }
+  });
 
   // Checkout session oluşturma
   static async createCheckoutSession(req, res) {
@@ -71,36 +78,26 @@ class PaymentController {
         const session = event.data.object;
         const metadata = session.metadata;
 
-        let interpretation = '';
-
-        // Yorumu al
+        // Sadece rüya yorumu için OpenAI'dan yorum al ve e-posta gönder
         if (metadata.type === 'dream') {
-          interpretation = await this.openAIService.interpretDream({
-            dreamDescription: metadata.dreamDescription,
-            dreamDate: metadata.dreamDate
-          });
-        } else if (metadata.type === 'coffee') {
-          interpretation = await this.openAIService.interpretCoffee({
-            images: metadata.images
-          });
-        }
+          try {
+            // OpenAI'dan rüya yorumu al
+            const interpretation = await openAIService.interpretDream(
+              metadata.dreamDescription,
+              metadata.dreamDate
+            );
 
-        // E-posta gönder
-        await this.sendEmail({
-          to: session.customer_email,
-          name: session.customer_name,
-          type: metadata.type,
-          interpretation
-        });
+            // E-posta gönder
+            await this.sendEmail({
+              to: metadata.customerEmail,
+              name: metadata.customerName,
+              interpretation
+            });
 
-        // WhatsApp mesajı gönder
-        if (metadata.phone) {
-          await this.sendWhatsAppMessage({
-            phone: metadata.phone,
-            name: session.customer_name,
-            type: metadata.type,
-            interpretation
-          });
+            console.log('Rüya yorumu e-posta ile gönderildi:', metadata.customerEmail);
+          } catch (error) {
+            console.error('Rüya yorumu veya e-posta gönderme hatası:', error);
+          }
         }
       }
 
@@ -129,17 +126,47 @@ class PaymentController {
     }
   }
 
-  async createSession(req, res) {
+  static async createSession(req, res) {
     try {
-      const { productId, customerEmail, customerName, metadata } = req.body;
+      const { productId, customerEmail, customerName, metadata, images } = req.body;
+
+      // Ödeme tutarını kontrol et
+      const amount = metadata.amount || (metadata.type === 'coffee' ? 299.99 : 49.99);
+      const unitAmount = Math.round(amount * 100); // TL'yi kuruşa çeviriyoruz
 
       // Stripe session oluştur
-      const session = await this.stripeService.createSession({
-        productId,
-        customerEmail,
-        customerName,
-        metadata
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ['card'],
+        line_items: [{
+          price_data: {
+            currency: 'try',
+            product_data: {
+              name: metadata.type === 'coffee' ? 'Kahve Falı' : 'Rüya Yorumu',
+              description: metadata.type === 'coffee' ? 'Kahve Falı Yorumu' : 'Rüya Yorumu Hizmeti',
+            },
+            unit_amount: unitAmount,
+          },
+          quantity: 1,
+        }],
+        customer_email: customerEmail,
+        mode: 'payment',
+        success_url: `${process.env.FRONTEND_URL}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${process.env.FRONTEND_URL}/payment/cancel`,
+        metadata: {
+          customerName,
+          customerEmail,
+          type: metadata.type,
+          amount: amount.toString(), // Sayısal değerleri string'e çevir
+          phone: metadata.phone || '',
+          imageCount: images ? images.length.toString() : '0' // Görüntü sayısını metadata'da sakla
+        },
       });
+
+      // Görüntüleri geçici olarak sakla veya işle
+      if (images && images.length > 0) {
+        // TODO: Görüntüleri işle veya sakla
+        console.log(`${images.length} adet görüntü alındı`);
+      }
 
       res.json({ url: session.url });
     } catch (error) {
@@ -148,18 +175,33 @@ class PaymentController {
     }
   }
 
-  async sendEmail({ to, name, type, interpretation }) {
-    // EmailJS entegrasyonu burada yapılacak
-    // Şimdilik console.log ile gösterelim
-    console.log(`E-posta gönderildi:
-      Alıcı: ${to}
-      İsim: ${name}
-      Tip: ${type}
-      Yorum: ${interpretation}
-    `);
+  static async sendEmail({ to, name, interpretation }) {
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: to,
+      subject: 'Rüya Yorumunuz Hazır! - Fal Periniz',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2>Merhaba ${name},</h2>
+          <p>Rüya yorumunuz hazır! İşte detaylar:</p>
+          <div style="background-color: #f9f9f9; padding: 20px; border-radius: 5px; margin: 20px 0;">
+            ${interpretation.split('\n').map(line => `<p>${line}</p>`).join('')}
+          </div>
+          <p>Saygılarımızla,<br>Fal Periniz Ekibi</p>
+        </div>
+      `
+    };
+
+    try {
+      await this.transporter.sendMail(mailOptions);
+      console.log('E-posta başarıyla gönderildi');
+    } catch (error) {
+      console.error('E-posta gönderme hatası:', error);
+      throw new Error('E-posta gönderilirken bir hata oluştu');
+    }
   }
 
-  async sendWhatsAppMessage({ phone, name, type, interpretation }) {
+  static async sendWhatsAppMessage({ phone, name, type, interpretation }) {
     // WhatsApp API entegrasyonu burada yapılacak
     // Şimdilik console.log ile gösterelim
     console.log(`WhatsApp mesajı gönderildi:

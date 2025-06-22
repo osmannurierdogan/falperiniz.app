@@ -7,6 +7,7 @@ const webhookMiddleware = express.raw({ type: 'application/json' });
 
 // Ödeme işlemleri
 router.post('/create-checkout-session', PaymentController.createCheckoutSession);
+router.post('/create-session', PaymentController.createSession);
 router.post('/webhook', webhookMiddleware, PaymentController.handleWebhook);
 router.get('/success', PaymentController.handleSuccess);
 

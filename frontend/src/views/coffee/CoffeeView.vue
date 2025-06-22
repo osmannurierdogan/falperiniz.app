@@ -112,13 +112,19 @@ const error = ref(null)
 const photoPreview = ref([])
 const photos = ref([])
 
-const handleImageUpload = (event) => {
+const handleImageUpload = async (event) => {
   const files = event.target.files
   if (!files.length) return
 
   const maxFiles = 3
   const maxSize = 5 * 1024 * 1024 // 5MB
   const allowedTypes = ['image/jpeg', 'image/png']
+  const targetWidth = 1024 // Hedef genişlik
+  const targetQuality = 0.7 // Sıkıştırma kalitesi (0-1 arası)
+
+  // Önceki fotoğrafları temizle
+  formData.value.images = []
+  photoPreview.value = []
 
   // Dosya sayısı kontrolü
   if (files.length > maxFiles) {
@@ -138,19 +144,67 @@ const handleImageUpload = (event) => {
     }
   }
 
-  // Dosyaları base64'e çevir
-  Array.from(files).forEach(file => {
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      formData.value.images.push(e.target.result)
+  error.value = null // Hata mesajını temizle
+
+  // Görüntüleri sıkıştır ve base64'e çevir
+  for (const file of files) {
+    try {
+      const compressedImage = await compressImage(file, targetWidth, targetQuality)
+      formData.value.images.push(compressedImage)
+
+      // Önizleme için URL oluştur
+      const previewUrl = URL.createObjectURL(file)
+      photoPreview.value.push(previewUrl)
+    } catch (err) {
+      console.error('Görüntü sıkıştırma hatası:', err)
+      error.value = 'Görüntü işlenirken bir hata oluştu'
+      return
     }
+  }
+}
+
+const compressImage = (file, targetWidth, quality) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
     reader.readAsDataURL(file)
+
+    reader.onload = (event) => {
+      const img = new Image()
+      img.src = event.target.result
+
+      img.onload = () => {
+        const canvas = document.createElement('canvas')
+        const ctx = canvas.getContext('2d')
+
+        // En-boy oranını koru
+        const scaleFactor = targetWidth / img.width
+        canvas.width = targetWidth
+        canvas.height = img.height * scaleFactor
+
+        // Görüntüyü çiz ve sıkıştır
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+
+        // Base64 formatına çevir
+        const compressedDataUrl = canvas.toDataURL('image/jpeg', quality)
+        resolve(compressedDataUrl)
+      }
+
+      img.onerror = (err) => reject(err)
+    }
+
+    reader.onerror = (err) => reject(err)
   })
 }
 
 const removePhoto = (index) => {
   photoPreview.value.splice(index, 1)
-  photos.value.splice(index, 1)
+  formData.value.images.splice(index, 1)
+
+  // Tüm fotoğraflar silindiyse input'u sıfırla
+  if (photoPreview.value.length === 0) {
+    const photoInput = document.querySelector('#photos')
+    if (photoInput) photoInput.value = ''
+  }
 }
 
 const sendInterpretationEmail = async (interpretation) => {
@@ -205,6 +259,16 @@ const handleSubmit = async () => {
     loading.value = true
     error.value = null
 
+    // Fotoğraf kontrolü
+    if (!formData.value.images.length) {
+      throw new Error('En az bir fincan fotoğrafı gerekli')
+    }
+
+    // Kahve falı yorumunu al
+    const interpretation = await interpretationService.interpretCoffeeReading({
+      imageUrls: formData.value.images
+    })
+
     // Ödeme işlemini başlat
     const { url } = await paymentStore.createPaymentSession({
       productId: coffeeProduct.id,
@@ -212,22 +276,20 @@ const handleSubmit = async () => {
       customerName: formData.value.name,
       metadata: {
         type: 'coffee',
-        images: formData.value.images,
-        phone: formData.value.phone
-      }
-    })
-
-    // Kahve falı yorumunu al
-    const interpretation = await interpretationService.interpretCoffee({
+        phone: formData.value.phone || '',
+        imageCount: formData.value.images.length.toString()
+      },
       images: formData.value.images
     })
 
     // E-posta gönder
-    await sendInterpretationEmail(interpretation)
+    if (interpretation) {
+      await sendInterpretationEmail(interpretation)
 
-    // WhatsApp mesajı gönder
-    if (formData.value.phone) {
-      await sendWhatsAppMessage(interpretation)
+      // WhatsApp mesajı gönder
+      if (formData.value.phone) {
+        await sendWhatsAppMessage(interpretation)
+      }
     }
 
     // Ödeme sayfasına yönlendir

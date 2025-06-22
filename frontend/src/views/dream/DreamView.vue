@@ -136,22 +136,6 @@ const sendInterpretationEmail = async (interpretation) => {
   }
 }
 
-const sendWhatsAppMessage = async (interpretation) => {
-  const phoneNumber = formData.value.phone.replace(/[^0-9]/g, '')
-  const message = encodeURIComponent(`
-Merhaba ${formData.value.name},
-
-Rüya yorumunuz hazır! İşte detaylar:
-
-${interpretation}
-
-Saygılarımızla,
-Fal Periniz Ekibi
-  `)
-
-  window.open(`https://wa.me/${phoneNumber}?text=${message}`, '_blank')
-}
-
 const handleSubmit = async () => {
   try {
     loading.value = true
@@ -164,25 +148,11 @@ const handleSubmit = async () => {
       customerName: formData.value.name,
       metadata: {
         type: 'dream',
+        amount: dreamProduct.price,
         dreamDate: formData.value.dreamDate,
-        dreamDescription: formData.value.dreamDescription,
-        phone: formData.value.phone
+        dreamDescription: formData.value.dreamDescription
       }
     })
-
-    // Rüya yorumunu al
-    const interpretation = await interpretationService.interpretDream({
-      dreamDescription: formData.value.dreamDescription,
-      dreamDate: formData.value.dreamDate
-    })
-
-    // E-posta gönder
-    await sendInterpretationEmail(interpretation)
-
-    // WhatsApp mesajı gönder
-    if (formData.value.phone) {
-      await sendWhatsAppMessage(interpretation)
-    }
 
     // Ödeme sayfasına yönlendir
     window.location.href = url

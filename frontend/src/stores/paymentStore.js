@@ -54,11 +54,18 @@ export const usePaymentStore = defineStore('payment', {
         this.loading = true
         this.error = null
 
-        const response = await axios.post('/payment/create-session', {
+        // Görüntüleri metadata'dan ayır
+        const { images, ...restMetadata } = metadata
+
+        const response = await axios.post('/api/payments/create-session', {
           productId,
           customerEmail,
           customerName,
-          metadata
+          images, // Görüntüleri ayrı bir alan olarak gönder
+          metadata: {
+            ...restMetadata,
+            amount: metadata.type === 'coffee' ? 299.99 : 49.99
+          }
         })
 
         this.currentSession = response.data

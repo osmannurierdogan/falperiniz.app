@@ -11,8 +11,13 @@ export const interpretationService = {
     }
   },
 
-  async interpretCoffeeReading(imageUrls) {
+  async interpretCoffeeReading({ imageUrls }) {
     try {
+      // Gelen veriyi kontrol et
+      if (!imageUrls || !Array.isArray(imageUrls) || imageUrls.length === 0) {
+        throw new Error('En az bir fincan fotoğrafı gerekli');
+      }
+
       const response = await axios.post('/api/interpretations/coffee', { imageUrls });
       return response.data.interpretation;
     } catch (error) {

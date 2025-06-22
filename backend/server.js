@@ -1,12 +1,7 @@
-const express = require("express");
-const cors = require("cors");
-const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 require("dotenv").config();
+const express = require("express");
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const app = require('./app');
-
-// Middleware
-app.use(express.json());
-app.use(cors());
 
 // Ödeme niyeti oluşturma endpoint'i
 app.post("/create-payment-intent", async (req, res) => {
@@ -110,7 +105,7 @@ app.post(
 
 // Environment variables kontrolü
 const requiredEnvVars = [
-  'PORT',
+  // 'PORT',
   'STRIPE_SECRET_KEY',
   // 'STRIPE_WEBHOOK_SECRET',
   'FRONTEND_URL'
@@ -123,7 +118,7 @@ if (missingEnvVars.length > 0) {
   process.exit(1);
 }
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 9999;
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

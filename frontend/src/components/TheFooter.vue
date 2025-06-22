@@ -67,15 +67,15 @@ footer.footer
           i.fab.fa-google-pay
 
       .social-links
-        a(href="#" target="_blank" rel="noopener noreferrer")
+        a(href="#" target="_blank" rel="noopener noreferrer" title="Instagram")
           span.icon-wrapper
-            | Instagram
-        a(href="#" target="_blank" rel="noopener noreferrer")
+            i.fab.fa-instagram
+        a(href="#" target="_blank" rel="noopener noreferrer" title="Facebook")
           span.icon-wrapper
-            | Facebook
-        a(href="#" target="_blank" rel="noopener noreferrer")
+            i.fab.fa-facebook
+        a(href="#" target="_blank" rel="noopener noreferrer" title="Twitter")
           span.icon-wrapper
-            | Twitter
+            i.fab.fa-twitter
 </template>
 
 <script setup lang="ts">
@@ -258,15 +258,33 @@ const handleSubscribe = () => {
 
   .social-links {
     display: flex;
-    gap: 1rem;
+    gap: 1.5rem;
+    justify-content: flex-end;
+
+    @media (max-width: 768px) {
+      justify-content: center;
+      margin-top: 2rem;
+    }
 
     a {
       color: rgba($white, 0.7);
-      font-size: 1.5rem;
       transition: $transition-normal;
+      display: flex;
+      align-items: center;
 
       &:hover {
         color: #e83e8c;
+        transform: translateY(-2px);
+      }
+
+      .icon-wrapper {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        i {
+          font-size: 1.25rem;
+        }
       }
     }
   }
