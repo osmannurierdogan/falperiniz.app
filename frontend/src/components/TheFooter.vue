@@ -48,8 +48,9 @@ footer.footer
             required
           )
           button.btn-subscribe(type="submit")
-            i.fas.fa-envelope
-            | Abone Ol
+            span.icon-wrapper
+              EnvelopeIcon
+              | Abone Ol
 
     .footer-bottom
       .copyright-section
@@ -67,15 +68,19 @@ footer.footer
 
       .social-links
         a(href="#" target="_blank" rel="noopener noreferrer")
-          i.fab.fa-instagram
+          span.icon-wrapper
+            | Instagram
         a(href="#" target="_blank" rel="noopener noreferrer")
-          i.fab.fa-facebook
+          span.icon-wrapper
+            | Facebook
         a(href="#" target="_blank" rel="noopener noreferrer")
-          i.fab.fa-twitter
+          span.icon-wrapper
+            | Twitter
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { EnvelopeIcon } from '@heroicons/vue/24/solid'
 
 const email = ref('')
 

@@ -9,9 +9,10 @@
           | ile Geleceğe Bakın
         p.hero-description(role="text") Yapay zeka teknolojisi ile rüyalarınızı yorumlayın ve kahve falınıza bakın. Bilinçaltınızdaki mesajları keşfedin.
         .button-group
-          router-link.btn.btn-primary(to="/register" role="button" aria-label="Hemen Başla")
-            span Hemen Başla
-            span.icon(aria-hidden="true") →
+          router-link.btn.btn-primary(to="/dream" role="button" aria-label="Hemen Başla")
+            span.icon-wrapper
+              span Hemen Başla
+              ArrowRightIcon
           router-link.btn.btn-outline(to="/about" role="button" aria-label="Keşfet") Keşfet
 
       .hero-image(aria-hidden="true")
@@ -192,18 +193,18 @@
     .container
       .cta-card
         h2(role="heading" aria-level="2") Geleceğinizi Keşfedin
-        p Ücretsiz hesap oluşturun ve yapay zeka destekli yorumları hemen almaya başlayın
+        p Hemen başlayın ve yapay zeka destekli yorumları almaya başlayın
         .button-group
           router-link.btn.btn-primary(
-            to="/register"
+            to="/dream"
             role="button"
-            aria-label="Ücretsiz Üye Ol"
-          ) Ücretsiz Üye Ol
+            aria-label="Rüya Yorumu"
+          ) Rüya Yorumu
           router-link.btn.btn-outline(
-            to="/login"
+            to="/coffee"
             role="button"
-            aria-label="Giriş Yap"
-          ) Giriş Yap
+            aria-label="Kahve Falı"
+          ) Kahve Falı
 </template>
 <style lang="scss" scoped>
 @import '@/assets/scss/_variables';
@@ -977,3 +978,7 @@
   }
 }
 </style>
+
+<script setup>
+import { ArrowRightIcon, HomeIcon } from '@heroicons/vue/24/solid'
+</script>

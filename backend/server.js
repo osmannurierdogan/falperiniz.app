@@ -2,8 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 require("dotenv").config();
-
-const app = express();
+const app = require('./app');
 
 // Middleware
 app.use(express.json());
@@ -109,8 +108,25 @@ app.post(
   },
 );
 
+// Environment variables kontrolü
+const requiredEnvVars = [
+  'PORT',
+  'STRIPE_SECRET_KEY',
+  // 'STRIPE_WEBHOOK_SECRET',
+  'FRONTEND_URL'
+];
+
+const missingEnvVars = requiredEnvVars.filter(envVar => !process.env[envVar]);
+
+if (missingEnvVars.length > 0) {
+  console.error('Error: Missing required environment variables:', missingEnvVars);
+  process.exit(1);
+}
+
 const PORT = process.env.PORT || 3000;
+
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
+  console.log('Environment:', process.env.NODE_ENV || 'development');
 });
 

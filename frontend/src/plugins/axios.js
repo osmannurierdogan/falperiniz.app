@@ -10,11 +10,6 @@ axios.defaults.baseURL = import.meta.env.VITE_API_URL || 'http://localhost:3000/
 // Request interceptor
 axios.interceptors.request.use(
   (config) => {
-    // Token varsa header'a ekle
-    const token = localStorage.getItem('token')
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`
-    }
     return config
   },
   (error) => {
@@ -29,15 +24,8 @@ axios.interceptors.response.use(
   async (error) => {
     console.error('Response error:', error)
 
-    // Token geçersizse veya süresi dolmuşsa
-    if (error.response?.status === 401) {
-      localStorage.removeItem('token')
-      delete axios.defaults.headers.common['Authorization']
-      router.push('/login')
-      toast.error('Oturum süreniz doldu. Lütfen tekrar giriş yapın.')
-    }
     // Yetki hatası
-    else if (error.response?.status === 403) {
+    if (error.response?.status === 403) {
       toast.error('Bu işlem için yetkiniz bulunmuyor.')
     }
     // Sunucu hatası

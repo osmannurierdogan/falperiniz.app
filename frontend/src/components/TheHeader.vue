@@ -39,16 +39,6 @@ header.site-header(role="banner")
             rel="noopener noreferrer"
             role="menuitem"
           ) Blog
-          
-          .auth-buttons
-            router-link.btn.btn-outline(
-              :to="{ name: 'login' }"
-              role="menuitem"
-            ) Giriş Yap
-            router-link.btn.btn-primary(
-              :to="{ name: 'register' }"
-              role="menuitem"
-            ) Üye Ol
 </template>
 
 <script setup lang="ts">
@@ -149,40 +139,6 @@ header.site-header(role="banner")
     }
   }
 
-  .auth-buttons {
-    display: flex;
-    gap: 1rem;
-    margin-left: 2rem;
 
-    .btn {
-      padding: 0.5rem 1rem;
-      border-radius: 8px;
-      font-weight: 600;
-      transition: all 0.3s ease;
-
-      &.btn-outline {
-        color: $white;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        background: transparent;
-
-        &:hover {
-          border-color: $secondary;
-          background: rgba(255, 255, 255, 0.1);
-          transform: translateY(-2px);
-        }
-      }
-
-      &.btn-primary {
-        background: linear-gradient(45deg, $secondary, $accent);
-        color: $white;
-        border: none;
-
-        &:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 4px 15px rgba($secondary, 0.3);
-        }
-      }
-    }
-  }
 }
 </style>

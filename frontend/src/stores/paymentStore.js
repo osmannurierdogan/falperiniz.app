@@ -1,15 +1,11 @@
 import { defineStore } from 'pinia'
 import axios from '@/plugins/axios'
-import { useProductStore } from './productStore'
-import { useAuthStore } from './authStore'
 
 export const usePaymentStore = defineStore('payment', {
   state: () => ({
     loading: false,
     error: null,
     currentSession: null,
-    successUrl: null,
-    cancelUrl: null,
   }),
 
   actions: {
@@ -18,12 +14,10 @@ export const usePaymentStore = defineStore('payment', {
       this.error = null
 
       try {
-        const authStore = useAuthStore()
-        
-        // Success ve cancel URL'lerini güncelle
+        // Success ve cancel URL'lerini oluştur
         const currentPath = window.location.pathname + window.location.search
-        this.successUrl = `${window.location.origin}/payment/success?from=${encodeURIComponent(currentPath)}`
-        this.cancelUrl = `${window.location.origin}/payment/cancel?from=${encodeURIComponent(currentPath)}`
+        const successUrl = `${window.location.origin}/payment/success?from=${encodeURIComponent(currentPath)}`
+        const cancelUrl = `${window.location.origin}/payment/cancel?from=${encodeURIComponent(currentPath)}`
 
         const items = [{
           name: type === 'coffee' ? 'Kahve Falı' : 'Rüya Yorumu',
@@ -32,21 +26,10 @@ export const usePaymentStore = defineStore('payment', {
           amount
         }]
 
-        console.log('Ödeme isteği gönderiliyor:', {
-          items,
-          userId: authStore.user?._id,
-          customerInfo
-        })
-
         const response = await axios.post('/api/payments/create-checkout-session', {
           items,
-          userId: authStore.user?._id,
           customerInfo
         })
-
-        console.log('Ödeme yanıtı:', response.data)
-
-        this.currentSession = response.data
 
         if (response.data.url) {
           window.location.href = response.data.url
@@ -55,11 +38,7 @@ export const usePaymentStore = defineStore('payment', {
         }
       } catch (error) {
         console.error('Ödeme hatası:', error)
-        if (error.response?.data?.message) {
-          this.error = error.response.data.message
-        } else {
-          this.error = 'Ödeme işlemi başlatılırken bir hata oluştu'
-        }
+        this.error = error.response?.data?.message || 'Ödeme işlemi başlatılırken bir hata oluştu'
         throw error
       } finally {
         this.loading = false
@@ -70,14 +49,32 @@ export const usePaymentStore = defineStore('payment', {
       this.error = null
     },
 
-    clearSession() {
-      this.currentSession = null
-    },
+    async createPaymentSession({ productId, customerEmail, customerName, metadata }) {
+      try {
+        this.loading = true
+        this.error = null
+
+        const response = await axios.post('/payment/create-session', {
+          productId,
+          customerEmail,
+          customerName,
+          metadata
+        })
+
+        this.currentSession = response.data
+        return response.data
+      } catch (error) {
+        this.error = error.response?.data?.message || 'Ödeme işlemi başlatılırken bir hata oluştu'
+        throw new Error(this.error)
+      } finally {
+        this.loading = false
+      }
+    }
   },
 
   getters: {
     isLoading: (state) => state.loading,
     getError: (state) => state.error,
-    getCurrentSession: (state) => state.currentSession,
+    getCurrentSession: (state) => state.currentSession
   },
 })
