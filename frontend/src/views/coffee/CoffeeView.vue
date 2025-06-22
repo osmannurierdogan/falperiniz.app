@@ -8,129 +8,224 @@
     .fortune__form-wrapper
       form.fortune__form(@submit.prevent="handleSubmit")
         .fortune__form-group
-          label.fortune__label(for="name") Ad Soyad
+          label.fortune__label(for="name") 
+            UserIcon
+            | Ad Soyad
           input.fortune__input#name(
             type="text"
-            v-model="form.name"
+            v-model="formData.name"
             placeholder="Adınız ve soyadınız"
             required
           )
         
         .fortune__form-group
-          label.fortune__label(for="email") E-posta
+          label.fortune__label(for="email")
+            EnvelopeIcon
+            | E-posta
           input.fortune__input#email(
             type="email"
-            v-model="form.email"
+            v-model="formData.email"
             placeholder="E-posta adresiniz"
             required
           )
         
         .fortune__form-group
-          label.fortune__label(for="phone") Telefon
+          label.fortune__label(for="phone")
+            PhoneIcon
+            | Telefon
           input.fortune__input#phone(
             type="tel"
-            v-model="form.phone"
+            v-model="formData.phone"
             placeholder="Telefon numaranız"
           )
 
         .fortune__form-group
-          label.fortune__label(for="photos") Fincan Fotoğrafları
+          label.fortune__label(for="photos")
+            PhotoIcon
+            | Fincan Fotoğrafları
           input.fortune__input#photos(
             type="file"
             accept="image/*"
             multiple
-            @change="handlePhotoUpload"
+            @change="handleImageUpload"
             required
           )
           .fortune__photo-preview(v-if="photoPreview.length")
             .fortune__photo-item(v-for="(photo, index) in photoPreview" :key="index")
               img(:src="photo" alt="Fincan fotoğrafı")
               button.fortune__photo-remove(@click.prevent="removePhoto(index)")
-                i.fas.fa-times
+                XMarkIcon
         
         .fortune__form-group
           label.fortune__label(for="notes") Notlar
           textarea.fortune__textarea#notes(
-            v-model="form.notes"
+            v-model="formData.notes"
             placeholder="Eklemek istediğiniz notlar (opsiyonel)"
             rows="3"
           )
         
         button.fortune__submit(
           type="submit"
-          :disabled="isSubmitting"
+          :disabled="loading"
         )
-          span {{ isSubmitting ? 'Yönlendiriliyor...' : 'Sonucu Öğrenmek için Tıkla' }}
-          i.fas.fa-arrow-right(v-if="!isSubmitting")
+          span {{ loading ? 'Yönlendiriliyor...' : 'Sonucu Öğrenmek için Tıkla' }}
+          ArrowRightIcon(v-if="!loading")
       
       .fortune__success(v-if="submitSuccess")
         p Fal talebiniz başarıyla alındı. En kısa sürede size dönüş yapacağız.
       
-      .fortune__error(v-if="submitError")
-        p {{ submitError }}
+      .fortune__error(v-if="error")
+        p {{ error }}
 </template>
 
 <script setup>
 import { ref } from 'vue'
 import { usePaymentStore } from '@/stores/paymentStore'
 import { useProductStore } from '@/stores/productStore'
+import { interpretationService } from '@/services/interpretationService'
 import emailjs from '@emailjs/browser'
+import {
+  ArrowRightIcon,
+  XMarkIcon,
+  UserIcon,
+  EnvelopeIcon,
+  PhoneIcon,
+  PhotoIcon,
+  DocumentTextIcon
+} from '@heroicons/vue/24/solid'
 
 const paymentStore = usePaymentStore()
 const productStore = useProductStore()
 const coffeeProduct = productStore.getProduct('coffee')
 
-const form = ref({
+const formData = ref({
+  images: [],
   name: '',
   email: '',
   phone: '',
   notes: ''
 })
 
-const isSubmitting = ref(false)
+const loading = ref(false)
 const submitSuccess = ref(false)
-const submitError = ref(null)
+const error = ref(null)
 const photoPreview = ref([])
 const photos = ref([])
 
-const handlePhotoUpload = (event) => {
-  const files = Array.from(event.target.files)
-  photos.value = files
+const handleImageUpload = async (event) => {
+  const files = event.target.files
+  if (!files.length) return
 
+  const maxFiles = 3
+  const maxSize = 5 * 1024 * 1024 // 5MB
+  const allowedTypes = ['image/jpeg', 'image/png']
+  const targetWidth = 1024 // Hedef genişlik
+  const targetQuality = 0.7 // Sıkıştırma kalitesi (0-1 arası)
+
+  // Önceki fotoğrafları temizle
+  formData.value.images = []
   photoPreview.value = []
-  files.forEach(file => {
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      photoPreview.value.push(e.target.result)
+
+  // Dosya sayısı kontrolü
+  if (files.length > maxFiles) {
+    error.value = `En fazla ${maxFiles} fotoğraf yükleyebilirsiniz`
+    return
+  }
+
+  // Dosya tipi ve boyut kontrolü
+  for (const file of files) {
+    if (!allowedTypes.includes(file.type)) {
+      error.value = 'Sadece JPEG ve PNG formatında fotoğraflar yükleyebilirsiniz'
+      return
     }
+    if (file.size > maxSize) {
+      error.value = 'Fotoğraflar en fazla 5MB boyutunda olabilir'
+      return
+    }
+  }
+
+  error.value = null // Hata mesajını temizle
+
+  // Görüntüleri sıkıştır ve base64'e çevir
+  for (const file of files) {
+    try {
+      const compressedImage = await compressImage(file, targetWidth, targetQuality)
+      formData.value.images.push(compressedImage)
+
+      // Önizleme için URL oluştur
+      const previewUrl = URL.createObjectURL(file)
+      photoPreview.value.push(previewUrl)
+    } catch (err) {
+      console.error('Görüntü sıkıştırma hatası:', err)
+      error.value = 'Görüntü işlenirken bir hata oluştu'
+      return
+    }
+  }
+}
+
+const compressImage = (file, targetWidth, quality) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
     reader.readAsDataURL(file)
+
+    reader.onload = (event) => {
+      const img = new Image()
+      img.src = event.target.result
+
+      img.onload = () => {
+        const canvas = document.createElement('canvas')
+        const ctx = canvas.getContext('2d')
+
+        // En-boy oranını koru
+        const scaleFactor = targetWidth / img.width
+        canvas.width = targetWidth
+        canvas.height = img.height * scaleFactor
+
+        // Görüntüyü çiz ve sıkıştır
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+
+        // Base64 formatına çevir
+        const compressedDataUrl = canvas.toDataURL('image/jpeg', quality)
+        resolve(compressedDataUrl)
+      }
+
+      img.onerror = (err) => reject(err)
+    }
+
+    reader.onerror = (err) => reject(err)
   })
 }
 
 const removePhoto = (index) => {
   photoPreview.value.splice(index, 1)
-  photos.value.splice(index, 1)
+  formData.value.images.splice(index, 1)
+
+  // Tüm fotoğraflar silindiyse input'u sıfırla
+  if (photoPreview.value.length === 0) {
+    const photoInput = document.querySelector('#photos')
+    if (photoInput) photoInput.value = ''
+  }
 }
 
-const sendFormEmail = async (formData) => {
+const sendInterpretationEmail = async (interpretation) => {
   try {
     await emailjs.send(
       'service_c6xlk78',
-      'template_p8fsufc',
+      'template_ih1yeh1',
       {
-        to_email: 'osmerd04@gmail.com',
+        to_email: formData.value.email,
         from_email: 'info@falperiniz.com',
-        subscriber_email: formData.email,
-        name: formData.name,
-        subject: 'Yeni Kahve Falı Talebi',
+        name: formData.value.name,
+        subject: 'Kahve Falınız Hazır',
         message: `
-          Ad Soyad: ${formData.name}
-          E-posta: ${formData.email}
-          Telefon: ${formData.phone}
-          Notlar: ${formData.notes}
-          Fotoğraf Sayısı: ${formData.photoCount}
-          Tarih: ${new Date().toLocaleString('tr-TR')}
-          Ödeme Tutarı: ${coffeeProduct.price} TL
+          Merhaba ${formData.value.name},
+
+          Kahve falınız hazır! İşte detaylar:
+
+          ${interpretation}
+
+          Saygılarımızla,
+          Fal Periniz Ekibi
         `,
         date: new Date().toLocaleString('tr-TR'),
         frameCompany: 'Fal Periniz'
@@ -139,31 +234,71 @@ const sendFormEmail = async (formData) => {
     )
   } catch (error) {
     console.error('E-posta gönderme hatası:', error)
-    throw error
+    throw new Error('E-posta gönderilirken bir hata oluştu')
   }
+}
+
+const sendWhatsAppMessage = async (interpretation) => {
+  const phoneNumber = formData.value.phone.replace(/[^0-9]/g, '')
+  const message = encodeURIComponent(`
+Merhaba ${formData.value.name},
+
+Kahve falınız hazır! İşte detaylar:
+
+${interpretation}
+
+Saygılarımızla,
+Fal Periniz Ekibi
+  `)
+
+  window.open(`https://wa.me/${phoneNumber}?text=${message}`, '_blank')
 }
 
 const handleSubmit = async () => {
   try {
-    isSubmitting.value = true
-    submitError.value = null
+    loading.value = true
+    error.value = null
 
-    // Form verilerini hazırla
-    const formData = {
-      ...form.value,
-      photoCount: photos.value.length
+    // Fotoğraf kontrolü
+    if (!formData.value.images.length) {
+      throw new Error('En az bir fincan fotoğrafı gerekli')
     }
 
-    // E-posta gönder
-    await sendFormEmail(formData)
+    // Kahve falı yorumunu al
+    const interpretation = await interpretationService.interpretCoffeeReading({
+      imageUrls: formData.value.images
+    })
 
     // Ödeme işlemini başlat
-    await paymentStore.createCheckoutSession('coffee')
-  } catch (error) {
-    console.error('Form gönderme hatası:', error)
-    submitError.value = error.message || 'Form gönderme hatası oluştu'
+    const { url } = await paymentStore.createPaymentSession({
+      productId: coffeeProduct.id,
+      customerEmail: formData.value.email,
+      customerName: formData.value.name,
+      metadata: {
+        type: 'coffee',
+        phone: formData.value.phone || '',
+        imageCount: formData.value.images.length.toString()
+      },
+      images: formData.value.images
+    })
+
+    // E-posta gönder
+    if (interpretation) {
+      await sendInterpretationEmail(interpretation)
+
+      // WhatsApp mesajı gönder
+      if (formData.value.phone) {
+        await sendWhatsAppMessage(interpretation)
+      }
+    }
+
+    // Ödeme sayfasına yönlendir
+    window.location.href = url
+  } catch (err) {
+    console.error('Form gönderme hatası:', err)
+    error.value = err.message || 'Bir hata oluştu'
   } finally {
-    isSubmitting.value = false
+    loading.value = false
   }
 }
 </script>
@@ -189,11 +324,18 @@ const handleSubmit = async () => {
   }
 
   &__label {
-    display: block;
-    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
     color: white;
     font-weight: 500;
     font-size: 0.9375rem;
+
+    svg {
+      flex-shrink: 0;
+      width: 1.25rem;
+      height: 1.25rem;
+    }
   }
 
   &__input,
@@ -267,7 +409,7 @@ const handleSubmit = async () => {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.5rem;
+    gap: 0.75rem;
     width: 100%;
     padding: 1rem;
     background: #6b46c1;
@@ -279,6 +421,12 @@ const handleSubmit = async () => {
     cursor: pointer;
     transition: all 0.2s ease;
 
+    svg {
+      flex-shrink: 0;
+      width: 1.5rem;
+      height: 1.5rem;
+    }
+
     &:hover:not(:disabled) {
       background: #553c9a;
     }
@@ -286,10 +434,6 @@ const handleSubmit = async () => {
     &:disabled {
       opacity: 0.7;
       cursor: not-allowed;
-    }
-
-    i {
-      font-size: 0.875rem;
     }
   }
 

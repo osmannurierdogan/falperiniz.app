@@ -6,33 +6,27 @@ export const useProductStore = defineStore('product', {
       coffee: {
         id: 'coffee-fortune',
         name: 'Kahve Falı',
+        description: 'Kahve Falı Yorumu',
         price: 299.99,
-        description: 'Kahve falınıza profesyonel falcılarımız bakıyor',
-        imageUrl: '/images/coffee-fortune.jpg',
+        type: 'coffee'
       },
       dream: {
         id: 'dream-interpretation',
         name: 'Rüya Yorumu',
+        description: 'Rüya Yorumu Hizmeti',
         price: 49.99,
-        description: 'Rüyanızı profesyonel rüya yorumcularımız yorumluyor',
-        imageUrl: '/images/dream-interpretation.jpg',
-      },
-    },
-    selectedProduct: null,
+        type: 'dream'
+      }
+    }
   }),
 
   getters: {
-    getProduct: (state) => (productId) => {
-      return state.products[productId]
+    getProduct: (state) => (type) => {
+      return state.products[type]
     },
-    getSelectedProduct: (state) => {
-      return state.selectedProduct
-    },
-  },
-
-  actions: {
-    setSelectedProduct(productId) {
-      this.selectedProduct = this.products[productId]
-    },
-  },
-})
+    
+    getAllProducts: (state) => {
+      return Object.values(state.products)
+    }
+  }
+}) 

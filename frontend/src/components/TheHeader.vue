@@ -7,6 +7,16 @@ header.site-header(role="banner")
         router-link.logo(to="/" aria-label="Ana Sayfa")
           span.logo-text Fal Periniz
 
+        //- Mobile Menu Button
+        button.mobile-menu-button(
+          @click="isMenuOpen = !isMenuOpen"
+          :aria-expanded="isMenuOpen"
+          aria-controls="mobile-menu"
+          aria-label="Menüyü Aç/Kapat"
+        )
+          Bars3Icon(v-if="!isMenuOpen")
+          XMarkIcon(v-else)
+
         //- Desktop Menu
         .desktop-menu(role="menubar")
           router-link.nav-link(
@@ -39,20 +49,55 @@ header.site-header(role="banner")
             rel="noopener noreferrer"
             role="menuitem"
           ) Blog
+
+        //- Mobile Menu
+        .mobile-menu#mobile-menu(
+          :class="{ 'is-open': isMenuOpen }"
+          role="menu"
+          aria-label="Mobil Menü"
+        )
+          router-link.mobile-nav-link(
+            to="/"
+            role="menuitem"
+            :class="{ active: $route.path === '/' }"
+            @click="isMenuOpen = false"
+          ) Ana Sayfa
           
-          .auth-buttons
-            router-link.btn.btn-outline(
-              to="/login"
-              role="menuitem"
-            ) Giriş Yap
-            router-link.btn.btn-primary(
-              to="/register"
-              role="menuitem"
-            ) Üye Ol
+          router-link.mobile-nav-link(
+            :to="{ name: 'dream' }"
+            role="menuitem"
+            :class="{ active: $route.path === '/dream' }"
+            @click="isMenuOpen = false"
+          ) Rüya Yorumu
+          
+          router-link.mobile-nav-link(
+            :to="{ name: 'coffee' }"
+            role="menuitem"
+            :class="{ active: $route.path === '/coffee' }"
+            @click="isMenuOpen = false"
+          ) Kahve Falı
+          
+          router-link.mobile-nav-link(
+            :to="{ name: 'about' }"
+            role="menuitem"
+            :class="{ active: $route.path === '/about' }"
+            @click="isMenuOpen = false"
+          ) Hakkımızda
+          
+          router-link.mobile-nav-link(
+            href="https://falperiniz.com/blogs/ne-anlama-gelir"
+            target="_blank"
+            rel="noopener noreferrer"
+            role="menuitem"
+            @click="isMenuOpen = false"
+          ) Blog
 </template>
 
 <script setup lang="ts">
-// Kullanılmayan importlar ve değişkenler kaldırıldı
+import { ref } from 'vue'
+import { Bars3Icon, XMarkIcon } from '@heroicons/vue/24/solid'
+
+const isMenuOpen = ref(false)
 </script>
 
 <style lang="scss" scoped>
@@ -98,6 +143,7 @@ header.site-header(role="banner")
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  z-index: 1001; // Logo her zaman üstte olsun
 
   .logo-text {
     font-size: 1.5rem;
@@ -114,10 +160,33 @@ header.site-header(role="banner")
   }
 }
 
+.mobile-menu-button {
+  display: none;
+  background: none;
+  border: none;
+  color: $white;
+  padding: 0.5rem;
+  cursor: pointer;
+  z-index: 1001; // Menü butonu her zaman üstte olsun
+
+  svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  @media (max-width: 768px) {
+    display: block;
+  }
+}
+
 .desktop-menu {
   display: flex;
   align-items: center;
   gap: 2rem;
+
+  @media (max-width: 768px) {
+    display: none;
+  }
 
   .nav-link {
     color: $white;
@@ -148,39 +217,80 @@ header.site-header(role="banner")
       }
     }
   }
+}
 
-  .auth-buttons {
+.mobile-menu {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  min-height: min-content;
+  max-height: 100vh;
+  background: linear-gradient(135deg, #2d1b4e 0%, #1a0f2e 100%);
+  padding: 5rem 2rem 2rem;
+  transform: translateX(100%);
+  transition: all 0.3s ease;
+  z-index: 1000;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    z-index: -1;
+  }
+
+  @media (max-width: 768px) {
     display: flex;
-    gap: 1rem;
-    margin-left: 2rem;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+  }
 
-    .btn {
-      padding: 0.5rem 1rem;
-      border-radius: 8px;
-      font-weight: 600;
-      transition: all 0.3s ease;
+  &.is-open {
+    transform: translateX(0);
+    box-shadow: -5px 0 30px rgba(0, 0, 0, 0.3);
+  }
 
-      &.btn-outline {
-        color: $white;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        background: transparent;
+  .mobile-nav-link {
+    color: $white;
+    text-decoration: none;
+    font-size: 1.25rem;
+    font-weight: 500;
+    padding: 0.75rem;
+    transition: all 0.3s ease;
+    position: relative;
+    opacity: 0.8;
+    width: 100%;
+    text-align: center;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.05);
 
-        &:hover {
-          border-color: $secondary;
-          background: rgba(255, 255, 255, 0.1);
-          transform: translateY(-2px);
-        }
-      }
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 2px;
+      background: linear-gradient(45deg, $secondary, $accent);
+      transition: width 0.3s ease;
+    }
 
-      &.btn-primary {
-        background: linear-gradient(45deg, $secondary, $accent);
-        color: $white;
-        border: none;
+    &:hover,
+    &.active {
+      opacity: 1;
+      background: rgba(255, 255, 255, 0.1);
+      transform: translateY(-2px);
 
-        &:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 4px 15px rgba($secondary, 0.3);
-        }
+      &::after {
+        width: 50%;
       }
     }
   }

@@ -8,7 +8,9 @@
     .fortune__form-wrapper
       form.fortune__form(@submit.prevent="handleSubmit")
         .fortune__form-group
-          label.fortune__label(for="name") Ad Soyad
+          label.fortune__label(for="name")
+            UserIcon
+            | Ad Soyad
           input.fortune__input#name(
             type="text"
             v-model="formData.name"
@@ -17,7 +19,9 @@
           )
         
         .fortune__form-group
-          label.fortune__label(for="email") E-posta
+          label.fortune__label(for="email")
+            EnvelopeIcon
+            | E-posta
           input.fortune__input#email(
             type="email"
             v-model="formData.email"
@@ -26,7 +30,9 @@
           )
         
         .fortune__form-group
-          label.fortune__label(for="phone") Telefon
+          label.fortune__label(for="phone")
+            PhoneIcon
+            | Telefon
           input.fortune__input#phone(
             type="tel"
             v-model="formData.phone"
@@ -34,7 +40,9 @@
           )
         
         .fortune__form-group
-          label.fortune__label(for="dream") Rüyanız
+          label.fortune__label(for="dream")
+            DocumentTextIcon
+            | Rüyanız
           textarea.fortune__textarea#dream(
             v-model="formData.dreamDescription"
             placeholder="Lütfen rüyanızı detaylı bir şekilde anlatın"
@@ -43,7 +51,9 @@
           )
 
         .fortune__form-group
-          label.fortune__label(for="dreamDate") Rüya Tarihi
+          label.fortune__label(for="dreamDate")
+            CalendarIcon
+            | Rüya Tarihi
           input.fortune__input#dreamDate(
             type="date"
             v-model="formData.dreamDate"
@@ -55,7 +65,7 @@
           :disabled="loading"
         )
           span {{ loading ? 'Yönlendiriliyor...' : 'Sonucu Öğrenmek için Tıkla' }}
-          i.fas.fa-arrow-right(v-if="!loading")
+          ArrowRightIcon(v-if="!loading")
       
       .fortune__success(v-if="submitSuccess")
         p Rüya yorumu talebiniz başarıyla alındı. En kısa sürede size dönüş yapacağız.
@@ -68,7 +78,16 @@
 import { ref } from 'vue'
 import { usePaymentStore } from '@/stores/paymentStore'
 import { useProductStore } from '@/stores/productStore'
+import { interpretationService } from '@/services/interpretationService'
 import emailjs from '@emailjs/browser'
+import {
+  ArrowRightIcon,
+  UserIcon,
+  EnvelopeIcon,
+  PhoneIcon,
+  CalendarIcon,
+  DocumentTextIcon
+} from '@heroicons/vue/24/solid'
 
 const paymentStore = usePaymentStore()
 const productStore = useProductStore()
@@ -77,7 +96,6 @@ const dreamProduct = productStore.getProduct('dream')
 const formData = ref({
   dreamDate: '',
   dreamDescription: '',
-  additionalNotes: '',
   name: '',
   email: '',
   phone: ''
@@ -87,26 +105,25 @@ const loading = ref(false)
 const submitSuccess = ref(false)
 const error = ref(null)
 
-const sendFormEmail = async (data) => {
+const sendInterpretationEmail = async (interpretation) => {
   try {
     await emailjs.send(
       'service_c6xlk78',
       'template_ih1yeh1',
       {
-        to_email: 'osmerd04@gmail.com',
-        from_email: 'info@osizsolutions.com',
-        customer_email: data.email,
-        name: data.name,
-        subject: 'Yeni Rüya Yorumu Talebi',
+        to_email: formData.value.email,
+        from_email: 'info@falperiniz.com',
+        name: formData.value.name,
+        subject: 'Rüya Yorumunuz Hazır',
         message: `
-          Ad Soyad: ${data.name}
-          E-posta: ${data.email}
-          Telefon: ${data.phone}
-          Rüya Tarihi: ${data.dreamDate}
-          Rüya Açıklaması: ${data.dreamDescription}
-          Ek Notlar: ${data.additionalNotes || 'Yok'}
-          Tarih: ${new Date().toLocaleString('tr-TR')}
-          Ödeme Tutarı: ${dreamProduct.price} TL
+          Merhaba ${formData.value.name},
+
+          Rüya yorumunuz hazır! İşte detaylar:
+
+          ${interpretation}
+
+          Saygılarımızla,
+          Fal Periniz Ekibi
         `,
         date: new Date().toLocaleString('tr-TR'),
         frameCompany: 'Fal Periniz'
@@ -115,6 +132,7 @@ const sendFormEmail = async (data) => {
     )
   } catch (error) {
     console.error('E-posta gönderme hatası:', error)
+    throw new Error('E-posta gönderilirken bir hata oluştu')
   }
 }
 
@@ -123,14 +141,24 @@ const handleSubmit = async () => {
     loading.value = true
     error.value = null
 
-    // E-posta gönder
-    await sendFormEmail(formData.value)
-
     // Ödeme işlemini başlat
-    await paymentStore.createCheckoutSession('dream')
+    const { url } = await paymentStore.createPaymentSession({
+      productId: dreamProduct.id,
+      customerEmail: formData.value.email,
+      customerName: formData.value.name,
+      metadata: {
+        type: 'dream',
+        amount: dreamProduct.price,
+        dreamDate: formData.value.dreamDate,
+        dreamDescription: formData.value.dreamDescription
+      }
+    })
+
+    // Ödeme sayfasına yönlendir
+    window.location.href = url
   } catch (err) {
-    error.value = err.message || 'Form gönderme hatası oluştu'
     console.error('Form gönderme hatası:', err)
+    error.value = err.message || 'Bir hata oluştu'
   } finally {
     loading.value = false
   }
@@ -158,11 +186,19 @@ const handleSubmit = async () => {
   }
 
   &__label {
-    display: block;
-    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
     color: white;
     font-weight: 500;
     font-size: 0.9375rem;
+    margin-bottom: 0.5rem;
+
+    svg {
+      flex-shrink: 0;
+      width: 1.5rem;
+      height: 1.5rem;
+    }
   }
 
   &__input,
@@ -196,7 +232,7 @@ const handleSubmit = async () => {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.5rem;
+    gap: 0.75rem;
     width: 100%;
     padding: 1rem;
     background: #6b46c1;
@@ -208,6 +244,12 @@ const handleSubmit = async () => {
     cursor: pointer;
     transition: all 0.2s ease;
 
+    svg {
+      flex-shrink: 0;
+      width: 1.5rem;
+      height: 1.5rem;
+    }
+
     &:hover:not(:disabled) {
       background: #553c9a;
     }
@@ -215,10 +257,6 @@ const handleSubmit = async () => {
     &:disabled {
       opacity: 0.7;
       cursor: not-allowed;
-    }
-
-    i {
-      font-size: 0.875rem;
     }
   }
 

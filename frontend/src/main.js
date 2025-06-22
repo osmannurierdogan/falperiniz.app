@@ -1,5 +1,4 @@
 import './assets/scss/main.scss'
-import '@fortawesome/fontawesome-free/css/all.css'
 
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
@@ -9,8 +8,10 @@ import 'vue-toastification/dist/index.css'
 import App from './App.vue'
 import router from './router'
 
-const app = createApp(App)
+// Axios konfigürasyonu
+import './plugins/axios'
 
+// Toast options
 const toastOptions = {
   position: 'top-right',
   timeout: 3000,
@@ -23,11 +24,10 @@ const toastOptions = {
   hideProgressBar: true,
   closeButton: 'button',
   icon: true,
-  rtl: false,
-  transition: 'Vue-Toastification__bounce',
-  maxToasts: 20,
-  newestOnTop: true,
+  rtl: false
 }
+
+const app = createApp(App)
 
 app.use(createPinia())
 app.use(router)

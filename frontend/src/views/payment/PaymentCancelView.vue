@@ -2,7 +2,7 @@
 .payment-cancel
   .cancel-card
     .cancel-icon
-      i.fas.fa-times-circle
+      XCircleIcon.w-5.h-5
     
     h1 Ödeme Tamamlanamadı
     p.message Ödeme işleminiz maalesef tamamlanamadı. Endişelenmeyin, hesabınızdan herhangi bir ücret tahsil edilmedi.
@@ -11,33 +11,48 @@
       h2 Size Nasıl Yardımcı Olabiliriz?
       .options
         .option
-          i.fas.fa-sync
+          .icon-wrapper
+            ArrowPathIcon.w-5.h-5
           h3 Tekrar Deneyin
           p Ödeme işlemini tekrar deneyebilirsiniz. Genellikle geçici sorunlar ikinci denemede çözülür.
           router-link.btn-retry(:to="previousPage")
-            | Tekrar Dene
+            span.icon-wrapper
+              span Tekrar Dene
+              ArrowRightIcon.w-5.h-5
         
         .option
-          i.fas.fa-headset
+          .icon-wrapper
+            ChatBubbleLeftRightIcon.w-5.h-5
           h3 Destek Alın
           p Sorun devam ederse müşteri hizmetlerimiz size yardımcı olmaktan mutluluk duyacaktır.
           .support-buttons
             a.btn-whatsapp(href="https://wa.me/+905555555555" target="_blank")
-              i.fab.fa-whatsapp
-              | WhatsApp
+              span.icon-wrapper
+                ChatBubbleLeftRightIcon.w-5.h-5
+                | WhatsApp
             a.btn-email(href="mailto:destek@falperiniz.com")
-              i.fas.fa-envelope
-              | E-posta
+              span.icon-wrapper
+                EnvelopeIcon.w-5.h-5
+                | E-posta
     
     .actions
       router-link.btn-home(to="/")
-        i.fas.fa-home
-        | Ana Sayfaya Dön
+        span.icon-wrapper
+          HomeIcon.w-5.h-5
+          | Ana Sayfaya Dön
 </template>
 
 <script setup>
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
+import {
+  XCircleIcon,
+  ArrowPathIcon,
+  ChatBubbleLeftRightIcon,
+  EnvelopeIcon,
+  HomeIcon,
+  ArrowRightIcon
+} from '@heroicons/vue/24/solid'
 
 const route = useRoute()
 const previousPage = computed(() => route.query.from || '/')
@@ -63,162 +78,139 @@ const previousPage = computed(() => route.query.from || '/')
   width: 100%;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.cancel-icon {
-  font-size: 5rem;
-  color: #f87171;
-  margin-bottom: 1.5rem;
-  
-  i {
-    filter: drop-shadow(0 4px 8px rgba(248, 113, 113, 0.3));
-  }
-}
-
-h1 {
-  font-size: 2.5rem;
   color: white;
-  margin-bottom: 1rem;
-  font-weight: 700;
-}
 
-.message {
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 1.1rem;
-  margin-bottom: 2rem;
-  line-height: 1.6;
+  h1 {
+    font-size: 2rem;
+    font-weight: 600;
+    margin: 1.5rem 0;
+  }
+
+  .message {
+    font-size: 1.1rem;
+    opacity: 0.9;
+    margin-bottom: 2rem;
+  }
 }
 
 .help-box {
   background: rgba(255, 255, 255, 0.05);
   border-radius: 1rem;
-  padding: 1.5rem;
-  margin-bottom: 2rem;
-  
-  h2 {
-    color: white;
-    font-size: 1.3rem;
-    margin-bottom: 2rem;
-  }
-}
+  padding: 2rem;
+  margin: 2rem 0;
 
-.options {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 2rem;
-  
-  .option {
-    padding: 1.5rem;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 1rem;
-    
-    i {
-      font-size: 2rem;
-      color: #4ade80;
-      margin-bottom: 1rem;
-    }
-    
-    h3 {
-      color: white;
-      font-size: 1.2rem;
-      margin-bottom: 0.5rem;
-    }
-    
-    p {
-      color: rgba(255, 255, 255, 0.8);
-      margin-bottom: 1.5rem;
-      font-size: 0.95rem;
-      line-height: 1.5;
+  h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+  }
+
+  .options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+
+    .option {
+      text-align: center;
+
+      .icon-wrapper {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1rem;
+      }
+
+      h3 {
+        font-size: 1.25rem;
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+      }
+
+      p {
+        opacity: 0.8;
+        margin-bottom: 1.5rem;
+      }
     }
   }
 }
 
 .support-buttons {
   display: flex;
-  gap: 0.5rem;
-  
+  gap: 1rem;
+  justify-content: center;
+
   a {
-    flex: 1;
-    padding: 0.75rem;
+    padding: 0.75rem 1.5rem;
     border-radius: 0.5rem;
-    text-decoration: none;
-    font-weight: 600;
-    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
     display: flex;
     align-items: center;
-    justify-content: center;
     gap: 0.5rem;
-    transition: all 0.3s ease;
-  }
-}
 
-.btn-retry,
-.btn-home,
-.btn-whatsapp,
-.btn-email {
-  padding: 0.75rem 1.5rem;
-  border-radius: 0.75rem;
-  text-decoration: none;
-  font-weight: 600;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  transition: all 0.3s ease;
+    &.btn-whatsapp {
+      background: #25d366;
+      color: white;
+
+      &:hover {
+        background: darken(#25d366, 10%);
+      }
+    }
+
+    &.btn-email {
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.2);
+      }
+    }
+  }
 }
 
 .btn-retry {
-  background: #4ade80;
-  color: white;
-  
-  &:hover {
-    background: #22c55e;
-  }
-}
-
-.btn-home {
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  
-  &:hover {
-    background: rgba(255, 255, 255, 0.2);
-  }
-}
-
-.btn-whatsapp {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
   background: #25d366;
   color: white;
-  
-  &:hover {
-    background: #22c55e;
-  }
-}
+  border-radius: 0.5rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
 
-.btn-email {
-  background: #3b82f6;
-  color: white;
-  
   &:hover {
-    background: #2563eb;
+    background: #4f46e5;
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
   }
 }
 
 .actions {
   margin-top: 2rem;
-}
 
-@media (max-width: 640px) {
-  .cancel-card {
-    padding: 2rem;
-  }
-  
-  .options {
-    grid-template-columns: 1fr;
-  }
-  
-  .support-buttons {
-    flex-direction: column;
+  .btn-home {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: translateY(-1px);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
   }
 }
-</style> 
+</style>
