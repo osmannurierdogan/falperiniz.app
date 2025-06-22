@@ -14,6 +14,7 @@
             option(value="pending") Bekleyen
             option(value="inProgress") İşleme Alınan
             option(value="completed") Tamamlanan
+            option(value="cancelled") İptal Edildi
         
         .filter-group
           label.text-sm.text-gray-300(for="type") Tür
@@ -74,7 +75,7 @@
                 span.value.text-white.ml-2 {{ getOrderTypeText(order.type) }}
               .info-item
                 span.label.text-gray-400 Tutar:
-                span.value.text-white.ml-2 {{ formatPrice(order.amount) }} TL
+                span.value.text-white.ml-2 {{ formatPrice(order.amount) }}
               .info-item(v-if="order.type === 'coffee'")
                 span.label.text-gray-400 Fotoğraf Sayısı:
                 span.value.text-white.ml-2 {{ order.photoCount }}
@@ -155,10 +156,12 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useToast } from 'vue-toastification'
+import { useAdminStore } from '@/stores/adminStore'
 
 const toast = useToast()
+const adminStore = useAdminStore()
 
 // Filtreler
 const filters = ref({
@@ -167,47 +170,9 @@ const filters = ref({
   date: ''
 })
 
-// Örnek veriler (Backend entegrasyonunda değiştirilecek)
-const orders = ref([
-  {
-    id: '1001',
-    type: 'coffee',
-    status: 'pending',
-    createdAt: '2024-03-20T10:30:00',
-    customer: {
-      name: 'Ahmet Yılmaz',
-      email: 'ahmet@example.com',
-      phone: '5551234567'
-    },
-    amount: 299.99,
-    photoCount: 3,
-    photos: [
-      '/sample/coffee1.jpg',
-      '/sample/coffee2.jpg',
-      '/sample/coffee3.jpg'
-    ],
-    draftInterpretation: ''
-  },
-  {
-    id: '1002',
-    type: 'dream',
-    status: 'inProgress',
-    createdAt: '2024-03-20T11:15:00',
-    customer: {
-      name: 'Ayşe Demir',
-      email: 'ayse@example.com',
-      phone: '5559876543'
-    },
-    amount: 49.99,
-    dreamDate: '2024-03-19',
-    dreamContent: 'Rüyamda beyaz bir at üzerinde uçsuz bucaksız bir ovada koşuyordum...',
-    draftInterpretation: ''
-  }
-])
-
 // Filtrelenmiş siparişler
 const filteredOrders = computed(() => {
-  return orders.value.filter(order => {
+  return adminStore.orders.filter(order => {
     if (filters.value.status !== 'all' && order.status !== filters.value.status) return false
     if (filters.value.type !== 'all' && order.type !== filters.value.type) return false
     if (filters.value.date) {
@@ -216,6 +181,14 @@ const filteredOrders = computed(() => {
     }
     return true
   })
+})
+
+onMounted(async () => {
+  try {
+    await adminStore.fetchOrders()
+  } catch (error) {
+    console.error('Siparişler yüklenirken hata:', error)
+  }
 })
 
 // Fotoğraf modal
@@ -241,10 +214,10 @@ const formatDate = (date) => {
 }
 
 const formatPrice = (price) => {
-  return Number(price).toLocaleString('tr-TR', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  })
+  return new Intl.NumberFormat('tr-TR', {
+    style: 'currency',
+    currency: 'TRY'
+  }).format(price)
 }
 
 const getOrderTypeText = (type) => {
@@ -255,7 +228,8 @@ const getStatusText = (status) => {
   const statusMap = {
     pending: 'Bekliyor',
     inProgress: 'İşleme Alındı',
-    completed: 'Tamamlandı'
+    completed: 'Tamamlandı',
+    cancelled: 'İptal Edildi'
   }
   return statusMap[status]
 }
@@ -264,7 +238,8 @@ const getStatusClass = (status) => {
   const statusMap = {
     pending: 'border-l-4 border-yellow-500',
     inProgress: 'border-l-4 border-blue-500',
-    completed: 'border-l-4 border-green-500'
+    completed: 'border-l-4 border-green-500',
+    cancelled: 'border-l-4 border-red-500'
   }
   return statusMap[status]
 }
@@ -273,7 +248,8 @@ const getStatusBadgeClass = (status) => {
   const statusMap = {
     pending: 'bg-yellow-500/20 text-yellow-300',
     inProgress: 'bg-blue-500/20 text-blue-300',
-    completed: 'bg-green-500/20 text-green-300'
+    completed: 'bg-green-500/20 text-green-300',
+    cancelled: 'bg-red-500/20 text-red-300'
   }
   return `px-3 py-1 rounded-full text-sm ${statusMap[status]}`
 }
@@ -289,29 +265,17 @@ const resetFilters = () => {
 // Backend entegrasyonu için fonksiyonlar
 const saveInterpretation = async (order) => {
   try {
-    // Backend'e yorum gönderme ve mail atma işlemi burada yapılacak
-    // Örnek:
-    // await adminStore.saveInterpretation(order.id, order.draftInterpretation)
-    toast.success('Yorum kaydedildi ve mail gönderildi')
-    order.interpretation = order.draftInterpretation
-    order.status = 'completed'
-    order.draftInterpretation = ''
+    await adminStore.saveInterpretation(order.id, order.draftInterpretation)
   } catch (error) {
-    toast.error('Bir hata oluştu')
-    console.error('Yorum kaydetme hatası:', error)
+    console.error('Yorum kaydedilirken hata:', error)
   }
 }
 
 const updateStatus = async (order, newStatus) => {
   try {
-    // Backend'e durum güncelleme işlemi burada yapılacak
-    // Örnek:
-    // await adminStore.updateOrderStatus(order.id, newStatus)
-    order.status = newStatus
-    toast.success('Durum güncellendi')
+    await adminStore.updateOrderStatus(order.id, newStatus)
   } catch (error) {
-    toast.error('Bir hata oluştu')
-    console.error('Durum güncelleme hatası:', error)
+    console.error('Durum güncellenirken hata:', error)
   }
 }
 </script>

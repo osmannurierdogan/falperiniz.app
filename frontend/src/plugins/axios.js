@@ -1,53 +1,57 @@
 import axios from 'axios'
-import { useAuthStore } from '@/stores/authStore'
+import { useToast } from 'vue-toastification'
+import router from '@/router'
+
+const toast = useToast()
 
 // API URL'ini ayarla
-axios.defaults.baseURL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+axios.defaults.baseURL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
 
 // Request interceptor
 axios.interceptors.request.use(
   (config) => {
-    const authStore = useAuthStore()
-    const token = authStore.token
-
+    // Token varsa header'a ekle
+    const token = localStorage.getItem('token')
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
-
     return config
   },
   (error) => {
+    console.error('Request error:', error)
     return Promise.reject(error)
-  },
+  }
 )
 
 // Response interceptor
 axios.interceptors.response.use(
   (response) => response,
   async (error) => {
-    const authStore = useAuthStore()
-    const originalRequest = error.config
+    console.error('Response error:', error)
 
-    // Token yenileme denemesi yapılmamışsa ve 401 hatası alındıysa
-    if (error.response?.status === 401 && !originalRequest._retry && authStore.token) {
-      originalRequest._retry = true
-
-      try {
-        // Token'ı yenile
-        await authStore.refreshToken()
-
-        // Yeni token ile isteği tekrarla
-        originalRequest.headers.Authorization = `Bearer ${authStore.token}`
-        return axios(originalRequest)
-      } catch (refreshError) {
-        // Token yenileme başarısız olursa çıkış yap
-        await authStore.logout()
-        return Promise.reject(refreshError)
-      }
+    // Token geçersizse veya süresi dolmuşsa
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token')
+      delete axios.defaults.headers.common['Authorization']
+      router.push('/login')
+      toast.error('Oturum süreniz doldu. Lütfen tekrar giriş yapın.')
+    }
+    // Yetki hatası
+    else if (error.response?.status === 403) {
+      toast.error('Bu işlem için yetkiniz bulunmuyor.')
+    }
+    // Sunucu hatası
+    else if (error.response?.status >= 500) {
+      toast.error('Sunucu hatası. Lütfen daha sonra tekrar deneyin.')
+    }
+    // Diğer hatalar
+    else {
+      const message = error.response?.data?.message || 'Bir hata oluştu'
+      toast.error(message)
     }
 
     return Promise.reject(error)
-  },
+  }
 )
 
 export default axios

@@ -124,10 +124,19 @@ const handleSubmit = async () => {
     error.value = null
 
     // E-posta gönder
-    await sendFormEmail(formData.value)
+    // await sendFormEmail(formData.value)
+
+    // Müşteri bilgilerini hazırla
+    const customerInfo = {
+      name: formData.value.name,
+      email: formData.value.email,
+      phone: formData.value.phone
+    }
 
     // Ödeme işlemini başlat
-    await paymentStore.createCheckoutSession('dream')
+    await paymentStore.createCheckoutSession('dream', dreamProduct.price, customerInfo)
+
+    submitSuccess.value = true
   } catch (err) {
     error.value = err.message || 'Form gönderme hatası oluştu'
     console.error('Form gönderme hatası:', err)

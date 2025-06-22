@@ -5,20 +5,22 @@
       h1.text-2xl.font-semibold.text-white Ürün Yönetimi
       BaseButton(
         @click="openProductModal()"
+        variant="primary"
       )
         i.fas.fa-plus.mr-2
         span Yeni Ürün
 
-    .grid.grid-cols-1.md\:grid-cols-2.gap-6
+    .grid(class="grid-cols-1 md:grid-cols-2 gap-6")
       .product-card(
-        v-for="product in products"
+        v-for="product in adminStore.products"
         :key="product.id"
-        class="bg-white/5 rounded-lg p-6"
+        class="bg-white/5 rounded-lg p-6 hover:bg-white/10 transition-colors"
       )
         .flex.items-center.justify-between.mb-4
           h3.text-xl.font-medium.text-white {{ product.name }}
           .badge(
             :class="product.active ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-300'"
+            class="px-3 py-1 rounded-full text-sm"
           ) {{ product.active ? 'Aktif' : 'Pasif' }}
 
         .product-info.space-y-4
@@ -28,7 +30,7 @@
 
           .info-item
             label.text-sm.text-gray-400 Fiyat
-            p.text-white {{ formatPrice(product.price) }} TL
+            p.text-white {{ formatPrice(product.price) }}
 
           .info-item
             label.text-sm.text-gray-400 Ortalama Tamamlanma Süresi
@@ -48,9 +50,11 @@
           BaseButton(
             variant="outline"
             @click="toggleProductStatus(product)"
+            :class="product.active ? 'text-red-300 hover:bg-red-500/10' : 'text-green-300 hover:bg-green-500/10'"
           ) {{ product.active ? 'Pasife Al' : 'Aktife Al' }}
           
           BaseButton(
+            variant="primary"
             @click="openProductModal(product)"
           ) Düzenle
 
@@ -130,8 +134,9 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useToast } from 'vue-toastification'
+import { useAdminStore } from '@/stores/adminStore'
 import { useForm } from '@/composables/useForm'
 import { useModal } from '@/composables/useModal'
 import BaseInput from '@/components/ui/BaseInput.vue'
@@ -139,38 +144,7 @@ import BaseButton from '@/components/ui/BaseButton.vue'
 import BaseModal from '@/components/ui/BaseModal.vue'
 
 const toast = useToast()
-
-// Örnek ürün verileri (Backend entegrasyonunda değiştirilecek)
-const products = ref([
-  {
-    id: 1,
-    name: 'Kahve Falı',
-    description: 'Uzman falcılarımız tarafından detaylı kahve falı yorumu',
-    price: 299.99,
-    averageCompletionTime: '24 saat içinde',
-    active: true,
-    features: [
-      'Detaylı yorum',
-      'Fotoğraflı analiz',
-      'Aşk, kariyer ve sağlık yorumları',
-      'WhatsApp desteği'
-    ]
-  },
-  {
-    id: 2,
-    name: 'Rüya Yorumu',
-    description: 'Rüyalarınızın profesyonel yorumlanması',
-    price: 49.99,
-    averageCompletionTime: '12 saat içinde',
-    active: true,
-    features: [
-      'Detaylı rüya analizi',
-      'Psikolojik yaklaşım',
-      'Sembol açıklamaları',
-      'Gelecek öngörüleri'
-    ]
-  }
-])
+const adminStore = useAdminStore()
 
 const editingProduct = ref(null)
 
@@ -197,11 +171,19 @@ const modal = useModal({
   }
 })
 
+onMounted(async () => {
+  try {
+    await adminStore.fetchProducts()
+  } catch (error) {
+    console.error('Ürünler yüklenirken hata:', error)
+  }
+})
+
 // Fiyat formatlama
 const formatPrice = (price) => {
   return new Intl.NumberFormat('tr-TR', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
+    style: 'currency',
+    currency: 'TRY'
   }).format(price)
 }
 
@@ -228,34 +210,24 @@ const saveProduct = async () => {
   // Boş özellikleri temizle
   form.features = form.features.filter(f => f.trim())
 
-  if (editingProduct.value) {
-    // Backend'e güncelleme isteği
-    // await productStore.updateProduct(editingProduct.value.id, form)
-    const index = products.value.findIndex(p => p.id === editingProduct.value.id)
-    products.value[index] = { ...editingProduct.value, ...form }
-  } else {
-    // Backend'e yeni ürün ekleme isteği
-    // const newProduct = await productStore.createProduct(form)
-    const newProduct = {
-      id: Date.now(),
-      active: true,
-      ...form
+  try {
+    if (editingProduct.value) {
+      await adminStore.updateProduct(editingProduct.value.id, form)
+    } else {
+      await adminStore.createProduct(form)
     }
-    products.value.push(newProduct)
+    modal.close()
+  } catch (error) {
+    console.error('Ürün kaydedilirken hata:', error)
   }
-  modal.close()
 }
 
 // Ürün durumu değiştirme
 const toggleProductStatus = async (product) => {
   try {
-    // Backend'e durum güncelleme isteği
-    // await productStore.updateProductStatus(product.id, !product.active)
-    product.active = !product.active
-    toast.success(`Ürün ${product.active ? 'aktife' : 'pasife'} alındı`)
+    await adminStore.toggleProductStatus(product.id)
   } catch (error) {
-    toast.error('Bir hata oluştu')
-    console.error('Ürün durumu güncelleme hatası:', error)
+    console.error('Ürün durumu güncellenirken hata:', error)
   }
 }
 </script>
@@ -278,6 +250,14 @@ const toggleProductStatus = async (product) => {
 
   .badge {
     @apply px-3 py-1 rounded-full text-sm font-medium;
+  }
+
+  .product-card {
+    @apply transition-all duration-200;
+
+    &:hover {
+      transform: translateY(-2px);
+    }
   }
 }
 </style>

@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import axios from '@/plugins/axios'
 import { useProductStore } from './productStore'
+import { useAuthStore } from './authStore'
 
 export const usePaymentStore = defineStore('payment', {
   state: () => ({
@@ -12,34 +13,35 @@ export const usePaymentStore = defineStore('payment', {
   }),
 
   actions: {
-    async createCheckoutSession(productId) {
+    async createCheckoutSession(type, amount, customerInfo) {
       this.loading = true
       this.error = null
 
       try {
+        const authStore = useAuthStore()
+        
         // Success ve cancel URL'lerini güncelle
         const currentPath = window.location.pathname + window.location.search
         this.successUrl = `${window.location.origin}/payment/success?from=${encodeURIComponent(currentPath)}`
         this.cancelUrl = `${window.location.origin}/payment/cancel?from=${encodeURIComponent(currentPath)}`
 
-        const productStore = useProductStore()
-        const product = productStore.getProduct(productId)
-
-        if (!product) {
-          throw new Error('Ürün bulunamadı')
-        }
+        const items = [{
+          name: type === 'coffee' ? 'Kahve Falı' : 'Rüya Yorumu',
+          description: type === 'coffee' ? 'Kahve Falı Yorumu' : 'Rüya Yorumu',
+          type,
+          amount
+        }]
 
         console.log('Ödeme isteği gönderiliyor:', {
-          productId,
-          amount: product.price,
+          items,
+          userId: authStore.user?._id,
+          customerInfo
         })
 
-        const response = await axios.post('/create-checkout-session', {
-          amount: product.price,
-          currency: 'TRY',
-          successUrl: this.successUrl,
-          cancelUrl: this.cancelUrl,
-          productName: product.name,
+        const response = await axios.post('/api/payments/create-checkout-session', {
+          items,
+          userId: authStore.user?._id,
+          customerInfo
         })
 
         console.log('Ödeme yanıtı:', response.data)
@@ -53,8 +55,8 @@ export const usePaymentStore = defineStore('payment', {
         }
       } catch (error) {
         console.error('Ödeme hatası:', error)
-        if (error.response?.data?.error) {
-          this.error = `Ödeme hatası: ${error.response.data.error}`
+        if (error.response?.data?.message) {
+          this.error = error.response.data.message
         } else {
           this.error = 'Ödeme işlemi başlatılırken bir hata oluştu'
         }

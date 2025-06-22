@@ -34,7 +34,7 @@
             ) Beni Hatırla
 
           router-link(
-            to="/auth/forgot-password"
+            to="/forgot-password"
             class="text-sm text-primary-500 hover:text-primary-400"
           ) Şifremi Unuttum
 
@@ -47,7 +47,7 @@
 
       .text-center.mt-6
         router-link(
-          to="/auth/register"
+          to="/register"
           class="text-sm text-gray-400 hover:text-white"
         ) Hesabınız yok mu? Kayıt olun
 </template>
@@ -67,15 +67,20 @@ const { form, errors, loading, handleSubmit } = useForm(
     email: '',
     password: '',
     remember: false
-  },
-  {
-    successMessage: 'Giriş başarılı'
   }
 )
 
 const login = async () => {
-  await authStore.login(form)
-  router.push('/admin')
+  try {
+    const success = await authStore.login(form.email, form.password)
+    if (success) {
+      console.log('Login successful, user:', authStore.user)
+      const redirectPath = authStore.isAdmin ? '/admin' : '/'
+      await router.push(redirectPath)
+    }
+  } catch (error) {
+    console.error('Login error:', error)
+  }
 }
 </script>
 

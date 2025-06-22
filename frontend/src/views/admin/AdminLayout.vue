@@ -8,24 +8,35 @@
     nav.sidebar-nav(class="mt-6")
       .sidebar-menu
         router-link.menu-item(
+          to="/admin"
+          :class="{ active: $route.path === '/admin' }"
+          class="flex items-center px-6 py-3 text-gray-300 hover:bg-gray-800 hover:text-white transition-colors"
+        )
+          i.fas.fa-tachometer-alt(class="mr-3")
+          span Dashboard
+        
+        router-link.menu-item(
           to="/admin/orders"
           :class="{ active: $route.path === '/admin/orders' }"
+          class="flex items-center px-6 py-3 text-gray-300 hover:bg-gray-800 hover:text-white transition-colors"
         )
-          i.fas.fa-shopping-cart
+          i.fas.fa-shopping-cart(class="mr-3")
           span Siparişler
         
         router-link.menu-item(
           to="/admin/products"
           :class="{ active: $route.path === '/admin/products' }"
+          class="flex items-center px-6 py-3 text-gray-300 hover:bg-gray-800 hover:text-white transition-colors"
         )
-          i.fas.fa-box
+          i.fas.fa-box(class="mr-3")
           span Ürünler
         
         router-link.menu-item(
           to="/admin/settings"
           :class="{ active: $route.path === '/admin/settings' }"
+          class="flex items-center px-6 py-3 text-gray-300 hover:bg-gray-800 hover:text-white transition-colors"
         )
-          i.fas.fa-cog
+          i.fas.fa-cog(class="mr-3")
           span Ayarlar
     
     .sidebar-footer(class="absolute bottom-0 left-0 right-0 p-4")
@@ -41,9 +52,9 @@
     .header(class="h-16 flex items-center justify-between px-8 border-b border-gray-200 bg-white/5")
       h1.text-xl.font-semibold.text-white {{ currentPageTitle }}
       .user-info(class="flex items-center")
-        span.text-gray-300 {{ userStore.user?.name }}
+        span.text-gray-300 {{ authStore.user?.name }}
         img.avatar(
-          :src="userStore.user?.avatar || '/default-avatar.png'"
+          :src="authStore.user?.avatar || '/default-avatar.png'"
           alt="User avatar"
           class="w-8 h-8 rounded-full ml-3"
         )
@@ -55,16 +66,16 @@
 <script setup>
 import { computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { useUserStore } from '@/stores/userStore'
+import { useAuthStore } from '@/stores/authStore'
 
 const router = useRouter()
 const route = useRoute()
-const userStore = useUserStore()
+const authStore = useAuthStore()
 
 const currentPageTitle = computed(() => route.meta.title || 'Admin Panel')
 
 const handleLogout = async () => {
-  await userStore.logout()
+  await authStore.logout()
   router.push('/login')
 }
 </script>
@@ -78,6 +89,31 @@ const handleLogout = async () => {
 .sidebar {
   backdrop-filter: blur(10px);
   background: rgba(17, 24, 39, 0.95);
+  z-index: 10;
+
+  .menu-item {
+    &.active {
+      background-color: rgba(255, 255, 255, 0.1);
+      color: white;
+    }
+  }
+}
+
+.main-content {
+  padding-left: 16rem;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+}
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  backdrop-filter: blur(10px);
+}
+
+.content {
+  min-height: calc(100vh - 4rem);
 }
 
 .nav-item {

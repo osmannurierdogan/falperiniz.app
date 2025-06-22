@@ -1,12 +1,12 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '@/views/HomeView.vue'
-import DreamView from '@/views/dream/DreamView.vue'
-import CoffeeView from '@/views/coffee/CoffeeView.vue'
-import PaymentSuccessView from '@/views/payment/PaymentSuccessView.vue'
-import PaymentCancelView from '@/views/payment/PaymentCancelView.vue'
-import adminGuard from './guards/adminGuard'
+import HomeView from '../views/HomeView.vue'
+import DreamView from '../views/dream/DreamView.vue'
+import CoffeeView from '../views/coffee/CoffeeView.vue'
+import PaymentSuccessView from '../views/payment/PaymentSuccessView.vue'
+import PaymentCancelView from '../views/payment/PaymentCancelView.vue'
+import { adminGuard, fortuneTellerGuard, dreamInterpreterGuard } from './guards'
 import guestGuard from './guards/guestGuard'
-import AboutView from '@/views/AboutView.vue'
+import AboutView from '../views/AboutView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -29,7 +29,7 @@ const router = createRouter({
     },
     {
       path: '/login',
-      name: 'Login',
+      name: 'login',
       component: () => import('../views/auth/LoginView.vue'),
       meta: {
         title: 'Giriş Yap',
@@ -38,7 +38,7 @@ const router = createRouter({
     },
     {
       path: '/register',
-      name: 'Register',
+      name: 'register',
       component: () => import('../views/auth/RegisterView.vue'),
       meta: {
         title: 'Kayıt Ol',
@@ -68,36 +68,83 @@ const router = createRouter({
     // Admin routes
     {
       path: '/admin',
-      component: () => import('@/views/admin/AdminLayout.vue'),
+      name: 'admin',
+      component: () => import('../views/admin/AdminLayout.vue'),
       beforeEnter: adminGuard,
       children: [
         {
           path: '',
-          redirect: '/admin/orders',
-        },
-        {
-          path: 'orders',
-          name: 'AdminOrders',
-          component: () => import('@/views/admin/OrdersView.vue'),
+          name: 'admin-dashboard',
+          component: () => import('../views/admin/DashboardView.vue'),
           meta: {
-            title: 'Sipariş Yönetimi',
-          },
-        },
-        {
-          path: 'products',
-          name: 'AdminProducts',
-          component: () => import('@/views/admin/ProductsView.vue'),
-          meta: {
-            title: 'Ürünler',
-          },
+            title: 'Admin Dashboard'
+          }
         },
         {
           path: 'settings',
-          name: 'AdminSettings',
-          component: () => import('@/views/admin/SettingsView.vue'),
-          meta: {
-            title: 'Ayarlar',
-          },
+          name: 'admin-settings',
+          component: () => import('../views/admin/SettingsView.vue'),
+        },
+        {
+          path: 'orders',
+          name: 'admin-orders',
+          component: () => import('../views/admin/OrdersView.vue'),
+        },
+      ],
+    },
+    {
+      path: '/fortune-teller',
+      name: 'fortune-teller',
+      component: () => import('../layouts/FortuneTellerLayout.vue'),
+      beforeEnter: fortuneTellerGuard,
+      children: [
+        {
+          path: '',
+          name: 'fortune-teller-dashboard',
+          component: () => import('../views/fortune-teller/DashboardView.vue'),
+        },
+        {
+          path: 'readings',
+          name: 'fortune-teller-readings',
+          component: () => import('../views/fortune-teller/ReadingsView.vue'),
+        },
+        {
+          path: 'readings/:id',
+          name: 'fortune-teller-reading-detail',
+          component: () => import('../views/fortune-teller/ReadingDetailView.vue'),
+        },
+        {
+          path: 'readings/:id/start',
+          name: 'fortune-teller-reading-start',
+          component: () => import('../views/fortune-teller/ReadingStartView.vue'),
+        },
+      ],
+    },
+    {
+      path: '/dream-interpreter',
+      name: 'dream-interpreter',
+      component: () => import('../layouts/DreamInterpreterLayout.vue'),
+      beforeEnter: dreamInterpreterGuard,
+      children: [
+        {
+          path: '',
+          name: 'dream-interpreter-dashboard',
+          component: () => import('../views/dream-interpreter/DashboardView.vue'),
+        },
+        {
+          path: 'interpretations',
+          name: 'dream-interpreter-interpretations',
+          component: () => import('../views/dream-interpreter/InterpretationsView.vue'),
+        },
+        {
+          path: 'interpretations/:id',
+          name: 'dream-interpreter-interpretation-detail',
+          component: () => import('../views/dream-interpreter/InterpretationDetailView.vue'),
+        },
+        {
+          path: 'interpretations/:id/start',
+          name: 'dream-interpreter-interpretation-start',
+          component: () => import('../views/dream-interpreter/InterpretationStartView.vue'),
         },
       ],
     },

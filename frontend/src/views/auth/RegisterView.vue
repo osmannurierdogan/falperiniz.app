@@ -66,7 +66,7 @@
 
       .text-center.mt-6
         router-link(
-          to="/auth/login"
+          to="/login"
           class="text-sm text-gray-400 hover:text-white"
         ) Zaten hesabınız var mı? Giriş yapın
 </template>
@@ -88,15 +88,16 @@ const { form, errors, loading, handleSubmit } = useForm(
     password: '',
     password_confirmation: '',
     terms: false
-  },
-  {
-    successMessage: 'Kayıt başarılı'
   }
 )
 
 const register = async () => {
-  await authStore.register(form)
-  router.push('/admin')
+  const success = await authStore.register(form)
+  if (success) {
+    // Admin rolüne sahip kullanıcıları admin sayfasına, diğerlerini ana sayfaya yönlendir
+    const redirectPath = authStore.isAdmin ? '/admin' : '/'
+    await router.push(redirectPath)
+  }
 }
 </script>
 

@@ -42,11 +42,11 @@ header.site-header(role="banner")
           
           .auth-buttons
             router-link.btn.btn-outline(
-              to="/login"
+              :to="{ name: 'login' }"
               role="menuitem"
             ) Giriş Yap
             router-link.btn.btn-primary(
-              to="/register"
+              :to="{ name: 'register' }"
               role="menuitem"
             ) Üye Ol
 </template>
